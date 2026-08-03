@@ -1,24 +1,25 @@
-# NDA Mock Test Platform
+# JEE Mock Test Platform
 
-A modern, responsive, and high-performance exam simulation platform designed for National Defence Academy (NDA) aspirants.
+A modern, responsive, and high-performance exam simulation platform designed for JEE Main and JEE Advanced aspirants.
 
 ## 🚀 Features
 
-- **Realistic Exam Interface**: Experience a layout inspired by Testbook with active countdown timer alerts and right-side question palette drawers.
+- **Realistic Exam Interface**: Experience a premium exam interface with active countdown timer alerts and right-side question palette drawers.
 - **Three Core Mock Categories**:
-  - **Previous Year Papers**: 42 Official GAT & Mathematics papers (2015-2025).
-  - **Mathematics Super Pack**: 36 Topic-wise chapter and subject tests.
-  - **Full Mock Tests**: 16 Full syllabus simulations.
+  - **NCERT Exemplar**: 76 chapter-wise tests for Physics, Chemistry, and Mathematics (Class 11 and Class 12).
+  - **JEE Main PYPs**: 134 official year-wise papers spanning 2019 to 2026.
+  - **JEE Advanced PYPs**: 10 official papers (Paper 1 & Paper 2) spanning 2021 to 2025.
 - **Dynamic Question Builder**: Fully parses LaTeX math formulas, structured tables, and assertion-reason formats.
 - **Local Progress Persistence**: Sessions auto-save dynamically in your browser's local storage, allowing you to resume interrupted tests.
 - **Performance Evaluation Tab**:
   - Comprehensive scorecard metrics (score, percentile, accuracy, average response times).
   - Detailed solutions panel with correct/incorrect answer filters.
-  - Static peer leaderboard rankings page.
+  - Preparation dashboard featuring subject breakdowns, weak/strong chapters, bookmarks, and attempt logs.
 - **Keyboard Navigation Shortcuts**:
   - `1` - `4` : Select answer options A to D
-  - `N` : Save & Next
-  - `M` : Mark for Review & Next
+  - `&rarr;` (Right Arrow) : Save & Next
+  - `&uarr;` (Up Arrow) : Mark for Review
+  - `&larr;` (Left Arrow) : Previous Question
   - `C` : Clear Response
   - `P` : Toggle Question Palette drawer
 
@@ -38,7 +39,7 @@ npm install
 npm run dev
 ```
 
-Build the static Single Page Application (SPA) production build:
+Build the static production bundle:
 
 ```bash
 npm run build

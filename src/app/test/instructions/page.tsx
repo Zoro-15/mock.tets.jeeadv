@@ -122,8 +122,9 @@ function InstructionsContent() {
               <li>Keyboard shortcuts:
                 <ul className="pl-6 mt-1.5 space-y-1 list-circle">
                   <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">1</kbd> - <kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">4</kbd>: Select answers A to D</li>
-                  <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">N</kbd>: Save & Next</li>
-                  <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">M</kbd>: Mark for Review</li>
+                  <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-[10px] font-mono">&rarr;</kbd> (Right Arrow): Save & Next</li>
+                  <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-[10px] font-mono">&uarr;</kbd> (Up Arrow): Mark for Review</li>
+                  <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-[10px] font-mono">&larr;</kbd> (Left Arrow): Previous Question</li>
                   <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">C</kbd>: Clear Response</li>
                   <li><kbd className="bg-background-custom px-1.5 py-0.5 border border-[#334155] rounded text-xs font-mono">P</kbd>: Toggle Question Palette drawer</li>
                 </ul>

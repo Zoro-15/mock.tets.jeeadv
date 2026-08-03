@@ -323,18 +323,21 @@ function ActiveTestContent() {
         return;
       }
 
-      const key = e.key.toUpperCase();
+      const key = e.key;
       
       if (['1', '2', '3', '4'].includes(key)) {
         e.preventDefault();
         selectOption(parseInt(key) - 1);
-      } else if (key === 'N') {
+      } else if (key === 'ArrowRight') {
         e.preventDefault();
         handleSaveAndNext();
-      } else if (key === 'M') {
+      } else if (key === 'ArrowUp') {
         e.preventDefault();
         handleMarkAndNext();
-      } else if (key === 'C') {
+      } else if (key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevious();
+      } else if (key.toUpperCase() === 'C') {
         e.preventDefault();
         if (activeQuestion) {
           const sel = responses[activeQuestion.id]?.selectedOptionIndex;
@@ -342,7 +345,7 @@ function ActiveTestContent() {
             selectOption(sel);
           }
         }
-      } else if (key === 'P') {
+      } else if (key.toUpperCase() === 'P') {
         e.preventDefault();
         setPaletteOpen(prev => !prev);
       }
@@ -350,7 +353,7 @@ function ActiveTestContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext]);
+  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext, handlePrevious]);
 
   if (loading) {
     return (
