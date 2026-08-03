@@ -283,6 +283,27 @@ function ActiveTestContent() {
     saveProgress(updated, timeLeftRef.current, currentIndex);
   }, [activeQuestion, responses, currentIndex, saveProgress]);
 
+  const clearResponse = useCallback(() => {
+    if (!activeQuestion) return;
+    const qId = activeQuestion.id;
+    const currentResp = responses[qId];
+    if (!currentResp) return;
+
+    const updated = {
+      ...responses,
+      [qId]: {
+        ...currentResp,
+        selectedOptionIndex: null,
+        selectedOptionIndices: [],
+        textResponse: '',
+        status: 'unattempted' as const
+      }
+    };
+
+    setResponses(updated);
+    saveProgress(updated, timeLeftRef.current, currentIndex);
+  }, [activeQuestion, responses, currentIndex, saveProgress]);
+
   const handlePrevious = useCallback(() => {
     if (currentIndex <= 0) return;
     const prevIdx = currentIndex - 1;
@@ -410,10 +431,10 @@ function ActiveTestContent() {
       if (['1', '2', '3', '4'].includes(key)) {
         e.preventDefault();
         selectOption(parseInt(key) - 1);
-      } else if (key === 'ArrowRight') {
+      } else if (key === 'ArrowRight' || key.toUpperCase() === 'N') {
         e.preventDefault();
         handleSaveAndNext();
-      } else if (key === 'ArrowUp') {
+      } else if (key === 'ArrowUp' || key.toUpperCase() === 'M') {
         e.preventDefault();
         handleMarkAndNext();
       } else if (key === 'ArrowLeft') {
@@ -421,12 +442,7 @@ function ActiveTestContent() {
         handlePrevious();
       } else if (key.toUpperCase() === 'C') {
         e.preventDefault();
-        if (activeQuestion) {
-          const sel = responses[activeQuestion.id]?.selectedOptionIndex;
-          if (sel !== null && sel !== undefined) {
-            selectOption(sel);
-          }
-        }
+        clearResponse();
       } else if (key.toUpperCase() === 'P') {
         e.preventDefault();
         setPaletteOpen(prev => !prev);
@@ -435,7 +451,7 @@ function ActiveTestContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext, handlePrevious]);
+  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext, handlePrevious, clearResponse]);
 
   if (loading) {
     return (

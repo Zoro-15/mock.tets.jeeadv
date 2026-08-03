@@ -13,6 +13,8 @@ export interface Question {
   explanation: string;
   questionNumber?: number; // Original question number from DB
   section?: string;        // E.g., 'Section A: English', 'Section B: GK'
+  positiveMarks?: number;
+  negativeMarks?: number;
 }
 
 export type TestCategory = 'exemplar' | 'jee_main' | 'jee_advanced';

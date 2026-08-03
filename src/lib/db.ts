@@ -209,37 +209,37 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
 
   if (isSupabaseConfigured && supabase) {
     try {
-      let query = supabase.from('questions').select('*');
+      let query = supabase.from('jee_questions').select('*');
       
       // If we have an exact sourceFileName configured, match it directly!
       if (test.sourceFileName) {
-        query = query.eq('source_file', test.sourceFileName);
+        query = query.eq('Test_Name', test.sourceFileName);
       } else {
         // Fallback fuzzy search rules
         if (test.category === 'exemplar') {
-          query = query.ilike('source_file', `%${test.title.replace(/chapter\s+/gi, '')}%`);
+          query = query.ilike('Test_Name', `%${test.title.replace(/chapter\s+/gi, '')}%`);
         } else if (test.category === 'jee_main') {
           const match = test.title.match(/(20\d{2})/);
           const year = match ? match[1] : '';
           if (year) {
-            query = query.ilike('source_file', `%${year}%`).ilike('source_file', '%main%');
+            query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%main%');
           }
         } else if (test.category === 'jee_advanced') {
           const match = test.title.match(/(20\d{2})/);
           const year = match ? match[1] : '';
           if (year) {
-            query = query.ilike('source_file', `%${year}%`).ilike('source_file', '%advanced%');
+            query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%advanced%');
           }
         }
       }
 
-      const { data, error } = await query.order('question_number', { ascending: true, nullsFirst: false }).order('id', { ascending: true });
+      const { data, error } = await query.order('Question_Number', { ascending: true, nullsFirst: false }).order('id', { ascending: true });
       if (error) throw error;
 
       if (data && data.length > 0) {
         // Fuzzy search might match multiple files
         // We isolate the best matching source file
-        const uniqueSourceFiles = Array.from(new Set(data.map((r: any) => r.source_file)));
+        const uniqueSourceFiles = Array.from(new Set(data.map((r: any) => r.Test_Name)));
         let selectedSourceFile = uniqueSourceFiles[0];
 
         if (uniqueSourceFiles.length > 1 && (test.category === 'jee_main' || test.category === 'jee_advanced')) {
@@ -255,19 +255,21 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
           }
         }
 
-        const isolatedData = data.filter((row: any) => row.source_file === selectedSourceFile);
+        const isolatedData = data.filter((row: any) => row.Test_Name === selectedSourceFile);
         console.log(`[Supabase] Loaded ${isolatedData.length} questions for test: ${testId} from ${selectedSourceFile}`);
 
         // Map database columns to Question interface
         const mapped = isolatedData.map((row: any) => ({
           id: row.id.toString(),
-          type: (row.question_text.includes('pmatrix') || row.question_text.includes('\\frac') ? 'latex' : 'text') as 'latex' | 'text',
-          questionText: row.question_text,
-          comprehension: row.comprehension || undefined,
-          options: [row.option_1, row.option_2, row.option_3, row.option_4],
-          correctOptionIndex: row.correct_index,
-          explanation: row.solution,
-          questionNumber: row.question_number
+          type: (row.Question_Text?.includes('pmatrix') || row.Question_Text?.includes('\\frac') ? 'latex' : 'text') as 'latex' | 'text',
+          questionText: row.Question_Text || '',
+          comprehension: row.Comprehension || undefined,
+          options: [row.Option_1 || '', row.Option_2 || '', row.Option_3 || '', row.Option_4 || ''],
+          correctOptionIndex: (Number(row.Correct_Answer) || 1) - 1,
+          explanation: row.Solution || '',
+          questionNumber: Number(row.Question_Number) || undefined,
+          positiveMarks: row.Positive_Marks !== undefined && row.Positive_Marks !== null ? Number(row.Positive_Marks) : undefined,
+          negativeMarks: row.Negative_Marks !== undefined && row.Negative_Marks !== null ? Number(row.Negative_Marks) : undefined
         }));
         questionsCache[testId] = mapped;
         return mapped;
@@ -366,11 +368,15 @@ export async function submitAttemptToSupabase(
   let correctCount = 0;
   let incorrectCount = 0;
   let unattemptedCount = 0;
+  let scoreRaw = 0;
 
   const marksPerQuestion = test.marks / test.questionsCount;
 
   questions.forEach((q) => {
     const resp = responses[q.id];
+    const posMarks = q.positiveMarks !== undefined && q.positiveMarks !== null && q.positiveMarks !== 0 ? q.positiveMarks : marksPerQuestion;
+    const negMarks = q.negativeMarks !== undefined && q.negativeMarks !== null && q.negativeMarks !== 0 ? q.negativeMarks : test.negativeMarking;
+
     if (!resp) {
       unattemptedCount++;
       return;
@@ -379,37 +385,51 @@ export async function submitAttemptToSupabase(
     const isMultiple = q.correctOptionIndices && q.correctOptionIndices.length > 0;
     const isTextBased = q.type === 'integer' || q.type === 'numeric';
 
+    let isAttempted = false;
+    let isCorrect = false;
+
     if (isTextBased) {
       if (!resp.textResponse || resp.textResponse.trim() === '') {
         unattemptedCount++;
-      } else if (resp.textResponse.trim() === q.correctTextResponse?.trim()) {
-        correctCount++;
       } else {
-        incorrectCount++;
+        isAttempted = true;
+        if (resp.textResponse.trim() === q.correctTextResponse?.trim()) {
+          isCorrect = true;
+        }
       }
     } else if (isMultiple) {
       const selected = resp.selectedOptionIndices || [];
       const correct = q.correctOptionIndices || [];
-      const isCorrect = selected.length === correct.length && selected.every(val => correct.includes(val));
+      const isCorrectCheck = selected.length === correct.length && selected.every(val => correct.includes(val));
       if (selected.length === 0) {
         unattemptedCount++;
-      } else if (isCorrect) {
-        correctCount++;
       } else {
-        incorrectCount++;
+        isAttempted = true;
+        if (isCorrectCheck) {
+          isCorrect = true;
+        }
       }
     } else {
       if (resp.selectedOptionIndex === null) {
         unattemptedCount++;
-      } else if (resp.selectedOptionIndex === q.correctOptionIndex) {
+      } else {
+        isAttempted = true;
+        if (resp.selectedOptionIndex === q.correctOptionIndex) {
+          isCorrect = true;
+        }
+      }
+    }
+
+    if (isAttempted) {
+      if (isCorrect) {
         correctCount++;
+        scoreRaw += posMarks;
       } else {
         incorrectCount++;
+        scoreRaw -= negMarks;
       }
     }
   });
-
-  const scoreRaw = (correctCount * marksPerQuestion) - (incorrectCount * test.negativeMarking);
   const score = Math.round(scoreRaw * 100) / 100;
 
   const totalAttempted = correctCount + incorrectCount;
