@@ -96,9 +96,50 @@ const class12MathsChapters = [
 
 export const exemplarTests: Test[] = [];
 
+function getDbTestName(ch: string, classVal: 'class11' | 'class12', subject: 'physics' | 'chemistry' | 'math'): string {
+  if (subject === 'math' && classVal === 'class12' && ch === 'Probability') return 'Probability (1)';
+  if (subject === 'math' && classVal === 'class12' && ch === 'Relations and Functions') return 'Relations and Functions (1)';
+  if (subject === 'chemistry' && classVal === 'class12' && ch === 'The p-Block Elements') return 'The p-block Elements';
+  if (subject === 'chemistry' && classVal === 'class11' && ch === 'The p-Block Elements') return 'The p -block Elements';
+  if (subject === 'chemistry' && classVal === 'class11' && ch === 'Thermodynamics') return 'Thermodynamics (1)';
+  
+  const map: Record<string, string> = {
+    // Class 12 Maths
+    "Three-Dimensional Geometry": "Three Dimensional Geometry",
+    
+    // Class 12 Chemistry
+    "The d- and f-Block Elements": "The d-and f-Block Elements",
+    "Alcohols, Phenols and Ethers": "Alcohols_ Phenols and Ethers",
+    "Aldehydes, Ketones and Carboxylic Acids": "Aldehydes_ Ketones and Carboxylic Acids",
+
+    // Class 12 Physics
+    "Electric Charges and Fields": "Electric Charges And Fields",
+    "Electrostatic Potential and Capacitance": "Electrostatic Potential And Capacitance",
+    "Moving Charges and Magnetism": "Moving Charges And Magnetism",
+    "Magnetism and Matter": "Magnetism And Matter",
+    "Ray Optics and Optical Instruments": "Ray Optics And Optical Instruments",
+    "Dual Nature of Radiation and Matter": "Dual Nature Of Radiation And Matter",
+
+    // Class 11 Maths
+    "Introduction to Three-Dimensional Geometry": "Introduction to Three Dimensional Geometry",
+
+    // Class 11 Chemistry
+    "Structure of Atom": "Structure of  Atom",
+    "Classification of Elements and Periodicity": "Classification of Elements and Periodicity in Properties",
+
+    // Class 11 Physics
+    "Motion in a Straight Line": "Motion In a Straight Line",
+    "Motion in a Plane": "Motion In a Plane",
+    "Work, Energy and Power": "Work_ Energy and Power"
+  };
+
+  return map[ch] || ch;
+}
+
 // Helper to push tests
 function addExemplarTests(chapters: string[], classVal: 'class11' | 'class12', subject: 'physics' | 'chemistry' | 'math') {
   chapters.forEach((ch, index) => {
+    const dbName = getDbTestName(ch, classVal, subject);
     exemplarTests.push({
       id: `exemplar-${classVal}-${subject}-${index + 1}`,
       title: `${subject.toUpperCase()} Ch ${index + 1}: ${ch}`,
@@ -109,7 +150,8 @@ function addExemplarTests(chapters: string[], classVal: 'class11' | 'class12', s
       duration: 20,
       marks: 40,
       negativeMarking: 1,
-      syllabus: [ch]
+      syllabus: [ch],
+      sourceFileName: dbName
     });
   });
 }

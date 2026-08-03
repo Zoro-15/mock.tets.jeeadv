@@ -4,6 +4,28 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 let cachedUniqueTestNames: string[] | null = null;
 
+function parseDateParts(title: string): { date: string, month: string } | null {
+  // Format 1: "2 April" or "22 January" or "28 Jan"
+  const match1 = title.match(/(?:\(|,\s*|\s+|^)\b(\d{1,2})\b\s+(January|April|June|July|February|March|September|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i);
+  if (match1) {
+    return {
+      date: parseInt(match1[1], 10).toString(),
+      month: match1[2].substring(0, 3).toLowerCase()
+    };
+  }
+  
+  // Format 2: "January 7" or "April 02"
+  const match2 = title.match(/\b(January|April|June|July|February|March|September|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s+\b(\d{1,2})\b/i);
+  if (match2) {
+    return {
+      date: parseInt(match2[2], 10).toString(),
+      month: match2[1].substring(0, 3).toLowerCase()
+    };
+  }
+  
+  return null;
+}
+
 function findDatabaseTestName(test: Test, uniqueNames: string[]): string | null {
   // If the test has an explicit sourceFileName configured, check it first
   if (test.sourceFileName && uniqueNames.includes(test.sourceFileName)) {
@@ -16,20 +38,20 @@ function findDatabaseTestName(test: Test, uniqueNames: string[]): string | null 
   if (test.category === 'jee_main') {
     const yearMatch = test.title.match(/(20\d{2})/);
     const year = yearMatch ? yearMatch[1] : '';
-    const dateMatch = test.title.match(/(\d+)\s+(January|April|June|July|February|March|September)/i);
-    const date = dateMatch ? dateMatch[1] : '';
-    const month = dateMatch ? dateMatch[2].substring(0, 3) : ''; // e.g. "Jan"
+    const appDate = parseDateParts(test.title);
     const shiftMatch = test.title.match(/(Shift \d+)/i);
-    const shift = shiftMatch ? shiftMatch[1] : '';
+    const shift = shiftMatch ? shiftMatch[1].toLowerCase() : '';
 
-    if (year && date && month && shift) {
+    if (year && appDate && shift) {
       const matched = uniqueNames.find(name => {
         const nLower = name.toLowerCase();
-        return nLower.includes('main') &&
-               nLower.includes(year) &&
-               nLower.includes(date) &&
-               nLower.includes(month.toLowerCase()) &&
-               nLower.includes(shift.toLowerCase());
+        if (!(nLower.includes('main') || nLower.includes('mains'))) return false;
+        if (!nLower.includes(year)) return false;
+        if (!nLower.includes(shift)) return false;
+        
+        const dbDate = parseDateParts(name);
+        if (!dbDate) return false;
+        return dbDate.date === appDate.date && dbDate.month === appDate.month;
       });
       if (matched) return matched;
     }
@@ -45,7 +67,7 @@ function findDatabaseTestName(test: Test, uniqueNames: string[]): string | null 
     if (year && paperNum) {
       const matched = uniqueNames.find(name => {
         const nLower = name.toLowerCase();
-        return nLower.includes('advanced') &&
+        return nLower.includes('advance') &&
                nLower.includes(year) &&
                (nLower.includes(`paper ${paperNum}`) || nLower.includes(`paper-${paperNum}`));
       });
@@ -59,7 +81,15 @@ function findDatabaseTestName(test: Test, uniqueNames: string[]): string | null 
     const chapterName = parts.length > 1 ? parts[1].trim() : test.title;
     const cleanChapter = chapterName.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const matched = uniqueNames.find(name => {
+    // Prioritize exact clean match first to avoid false substring overlaps
+    let matched = uniqueNames.find(name => {
+      const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return cleanName === cleanChapter;
+    });
+    if (matched) return matched;
+
+    // Fallback to substring matching
+    matched = uniqueNames.find(name => {
       const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       return cleanName.includes(cleanChapter) || cleanChapter.includes(cleanName) ||
              (cleanChapter.startsWith('probability') && cleanName.startsWith('probability')) ||
