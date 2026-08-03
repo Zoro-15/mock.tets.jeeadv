@@ -66,3 +66,13 @@ package-lock.json
 *-migrate.js
 *-revert.js
 scratch/
+
+# Data processing and scraping scripts
+debug_json.py
+extract_to_csv.py
+test_extract.py
+analyze_csv.py
+
+# Raw data directories and files
+jee-mocks/
+*.txt
