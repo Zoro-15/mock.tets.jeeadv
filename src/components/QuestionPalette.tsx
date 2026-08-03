@@ -69,7 +69,7 @@ export default function QuestionPalette({
       )}
 
       {/* Drawer Container */}
-      <div className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-background-custom md:bg-surface-custom border-l border-[#334155] z-50 transform transition-transform duration-300 flex flex-col md:static md:translate-x-0 md:z-0 md:h-[calc(100vh-140px)] md:rounded-2xl shadow-2xl md:shadow-none ${
+      <div className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-background-custom md:bg-surface-custom border-l border-[#334155] z-50 transform transition-transform duration-300 flex flex-col md:static md:translate-x-0 md:z-0 md:h-full md:rounded-2xl shadow-2xl md:shadow-none ${
         isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
       }`}>
         {/* Mobile Header (Close button & title) */}

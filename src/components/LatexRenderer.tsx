@@ -27,7 +27,8 @@ export default React.memo(function LatexRenderer({ text }: LatexRendererProps) {
     .replace(/color:\s*\w+;?/gi, '')
     .replace(/style="\s*"/gi, '')
     .replace(/\\\\([()\[\]])/g, '\\$1')
-    .replace(/\\\\([a-zA-Z])/g, '\\$1');
+    .replace(/\\\\([a-zA-Z])/g, '\\$1')
+    .replace(/src=(['"])\/\//gi, 'src=$1https://');
 
   // 2. Decode HTML entities while keeping HTML tags intact
   const decodedText = decodeHtmlEntities(cleanedText);

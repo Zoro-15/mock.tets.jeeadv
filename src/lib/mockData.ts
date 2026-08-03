@@ -279,29 +279,79 @@ export function generateQuestionsForTest(testId: string): Question[] {
       } else {
         qDetails = getMathQuestion(num, testNumber);
       }
+    } else if (test.category === 'jee_main') {
+      // 2. JEE Main (6 sections): Math A (20 Qs), Math B (5 Qs), Chem A (20 Qs), Chem B (5 Qs), Phys A (20 Qs), Phys B (5 Qs)
+      if (num <= 20) {
+        section = 'Mathematics Section A';
+        qDetails = getMathQuestion(num, testNumber);
+      } else if (num <= 25) {
+        section = 'Mathematics Section B';
+        qDetails = getMathQuestion(num - 20, testNumber);
+      } else if (num <= 45) {
+        section = 'Chemistry Section A';
+        qDetails = getChemistryQuestion(num - 25, testNumber);
+      } else if (num <= 50) {
+        section = 'Chemistry Section B';
+        qDetails = getChemistryQuestion(num - 45, testNumber);
+      } else if (num <= 70) {
+        section = 'Physics Section A';
+        qDetails = getPhysicsQuestion(num - 50, testNumber);
+      } else {
+        section = 'Physics Section B';
+        qDetails = getPhysicsQuestion(num - 70, testNumber);
+      }
     } else {
-      // 2. If it's a full paper (JEE Main / JEE Advanced), split questions equally between Physics, Chemistry, and Math
+      // 3. JEE Advanced (3 sections: Physics, Chemistry, Mathematics)
       const totalQ = test.questionsCount;
       const secSize = Math.floor(totalQ / 3);
       
       if (num <= secSize) {
-        section = 'Section A: Physics';
+        section = 'Physics';
         qDetails = getPhysicsQuestion(num, testNumber);
       } else if (num <= secSize * 2) {
-        section = 'Section B: Chemistry';
+        section = 'Chemistry';
         qDetails = getChemistryQuestion(num - secSize, testNumber);
       } else {
-        section = 'Section C: Mathematics';
+        section = 'Mathematics';
         qDetails = getMathQuestion(num - secSize * 2, testNumber);
       }
     }
 
-    list.push({
+    const finalQ: Question = {
       id: qId,
       ...qDetails,
       questionNumber: num,
-      section
-    });
+      section,
+      type: 'single' // default type
+    };
+
+    // Apply question types mapping based on NTA exam structure:
+    if (test.category === 'jee_main') {
+      // JEE Main layout: Section A has 20 MCQs (Single Correct), Section B has 5 Numerical Questions (Integer/Numeric)
+      const isSecB = (num >= 21 && num <= 25) || (num >= 46 && num <= 50) || (num >= 71 && num <= 75);
+      if (isSecB) {
+        finalQ.type = num % 2 === 0 ? 'integer' : 'numeric';
+        finalQ.correctTextResponse = num % 2 === 0 ? '12' : '4.5';
+        finalQ.options = []; // Clear options for text responses
+      }
+    } else if (test.category === 'jee_advanced') {
+      // JEE Advanced layout: Qs 1-6 are Single, Qs 7-12 are Multiple, Qs 13-16/18 are Numerical
+      const secSize = Math.floor(test.questionsCount / 3);
+      const relativeNum = ((num - 1) % secSize) + 1; // 1 to secSize
+      
+      if (relativeNum <= 6) {
+        finalQ.type = 'single';
+      } else if (relativeNum <= 12) {
+        finalQ.type = 'multiple';
+        finalQ.correctOptionIndices = [finalQ.correctOptionIndex, (finalQ.correctOptionIndex + 2) % 4].sort();
+      } else {
+        finalQ.type = relativeNum % 2 === 0 ? 'integer' : 'numeric';
+        finalQ.correctTextResponse = relativeNum % 2 === 0 ? '6' : '0.75';
+        finalQ.options = []; // Clear options for text responses
+      }
+    }
+
+    list.push(finalQ);
   }
 
   return list;

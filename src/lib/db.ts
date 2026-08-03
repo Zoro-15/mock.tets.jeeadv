@@ -376,12 +376,36 @@ export async function submitAttemptToSupabase(
       return;
     }
 
-    if (resp.selectedOptionIndex === null) {
-      unattemptedCount++;
-    } else if (resp.selectedOptionIndex === q.correctOptionIndex) {
-      correctCount++;
+    const isMultiple = q.correctOptionIndices && q.correctOptionIndices.length > 0;
+    const isTextBased = q.type === 'integer' || q.type === 'numeric';
+
+    if (isTextBased) {
+      if (!resp.textResponse || resp.textResponse.trim() === '') {
+        unattemptedCount++;
+      } else if (resp.textResponse.trim() === q.correctTextResponse?.trim()) {
+        correctCount++;
+      } else {
+        incorrectCount++;
+      }
+    } else if (isMultiple) {
+      const selected = resp.selectedOptionIndices || [];
+      const correct = q.correctOptionIndices || [];
+      const isCorrect = selected.length === correct.length && selected.every(val => correct.includes(val));
+      if (selected.length === 0) {
+        unattemptedCount++;
+      } else if (isCorrect) {
+        correctCount++;
+      } else {
+        incorrectCount++;
+      }
     } else {
-      incorrectCount++;
+      if (resp.selectedOptionIndex === null) {
+        unattemptedCount++;
+      } else if (resp.selectedOptionIndex === q.correctOptionIndex) {
+        correctCount++;
+      } else {
+        incorrectCount++;
+      }
     }
   });
 

@@ -105,9 +105,9 @@ function addExemplarTests(chapters: string[], classVal: 'class11' | 'class12', s
       category: 'exemplar',
       subCategory: classVal,
       subject,
-      questionsCount: 15,
+      questionsCount: 10,
       duration: 20,
-      marks: 60,
+      marks: 40,
       negativeMarking: 1,
       syllabus: [ch]
     });

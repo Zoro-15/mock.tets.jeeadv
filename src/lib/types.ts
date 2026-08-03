@@ -1,6 +1,6 @@
 export interface Question {
   id: string;
-  type: 'text' | 'latex' | 'table' | 'assertion-reason';
+  type: 'text' | 'latex' | 'table' | 'assertion-reason' | 'single' | 'multiple' | 'integer' | 'numeric' | 'passage';
   questionText: string;
   comprehension?: string; // Used for passage/comprehension questions
   assertionText?: string; // Used for assertion-reason questions
@@ -8,6 +8,8 @@ export interface Question {
   tableData?: string[][]; // Header row + data rows for tables
   options: string[];      // 4 choices
   correctOptionIndex: number;
+  correctOptionIndices?: number[]; // For multiple correct MCQs
+  correctTextResponse?: string;    // For integer/numeric questions
   explanation: string;
   questionNumber?: number; // Original question number from DB
   section?: string;        // E.g., 'Section A: English', 'Section B: GK'
@@ -34,7 +36,9 @@ export interface Test {
 
 export interface QuestionResponse {
   questionId: string;
-  selectedOptionIndex: number | null; // null if unattempted
+  selectedOptionIndex: number | null; // null if unattempted (stores first choice for multiple MCQ fallback)
+  selectedOptionIndices?: number[];    // for multiple correct MCQs
+  textResponse?: string;              // for integer/numeric questions
   timeSpent: number;                  // time spent in seconds
   status: 'unseen' | 'unattempted' | 'attempted' | 'marked' | 'marked-attempted';
 }

@@ -123,3 +123,17 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: #b5b2a5;
 }
+
+/* Centered, responsive images in questions */
+.vertical-middle img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.25rem auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme="light"] .vertical-middle img {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}

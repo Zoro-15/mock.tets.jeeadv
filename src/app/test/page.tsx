@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Attempt, Test, Question, QuestionResponse } from '../../lib/types';
@@ -35,6 +35,26 @@ function ActiveTestContent() {
 
   // Time spent per question tracker - stored in mutable ref to avoid continuous state re-triggering
   const timeSpentRef = useRef<Record<string, number>>({});
+
+  // Dynamic sections computation for tabs
+  const sections = useMemo(() => {
+    const list: string[] = [];
+    questions.forEach(q => {
+      if (q.section && !list.includes(q.section)) {
+        list.push(q.section);
+      }
+    });
+    return list;
+  }, [questions]);
+
+  const activeSection = questions[currentIndex]?.section || '';
+
+  const handleSectionTabClick = (secName: string) => {
+    const targetIdx = questions.findIndex(q => q.section === secName);
+    if (targetIdx !== -1) {
+      handleSelectIndex(targetIdx);
+    }
+  };
 
   // Fetch initial details
   useEffect(() => {
@@ -191,22 +211,74 @@ function ActiveTestContent() {
     if (!activeQuestion) return;
     const qId = activeQuestion.id;
     const currentResp = responses[qId];
+    if (!currentResp) return;
 
-    const isAlreadySelected = currentResp.selectedOptionIndex === optIdx;
+    const isMultiple = activeQuestion.type === 'multiple' || (activeQuestion.correctOptionIndices && activeQuestion.correctOptionIndices.length > 0);
 
+    let updated;
+    if (isMultiple) {
+      const currentIndices = currentResp.selectedOptionIndices || [];
+      let updatedIndices: number[];
+      if (currentIndices.includes(optIdx)) {
+        updatedIndices = currentIndices.filter(idx => idx !== optIdx);
+      } else {
+        updatedIndices = [...currentIndices, optIdx].sort();
+      }
+
+      const isAttempted = updatedIndices.length > 0;
+      updated = {
+        ...responses,
+        [qId]: {
+          ...currentResp,
+          selectedOptionIndices: updatedIndices,
+          selectedOptionIndex: isAttempted ? updatedIndices[0] : null,
+          status: !isAttempted
+            ? (currentResp.status === 'marked-attempted' ? 'marked' as const : 'unattempted' as const)
+            : ((currentResp.status === 'marked' || currentResp.status === 'marked-attempted')
+              ? 'marked-attempted' as const
+              : 'attempted' as const)
+        }
+      };
+    } else {
+      const isAlreadySelected = currentResp.selectedOptionIndex === optIdx;
+      updated = {
+        ...responses,
+        [qId]: {
+          ...currentResp,
+          selectedOptionIndex: isAlreadySelected ? null : optIdx,
+          status: isAlreadySelected
+            ? (currentResp.status === 'marked-attempted' ? 'marked' as const : 'unattempted' as const)
+            : ((currentResp.status === 'marked' || currentResp.status === 'marked-attempted')
+              ? 'marked-attempted' as const
+              : 'attempted' as const)
+        }
+      };
+    }
+    
+    setResponses(updated);
+    saveProgress(updated, timeLeftRef.current, currentIndex);
+  }, [activeQuestion, responses, currentIndex, saveProgress]);
+
+  const handleTextResponseChange = useCallback((val: string) => {
+    if (!activeQuestion) return;
+    const qId = activeQuestion.id;
+    const currentResp = responses[qId];
+    if (!currentResp) return;
+
+    const isAttempted = val.trim() !== '';
     const updated = {
       ...responses,
       [qId]: {
         ...currentResp,
-        selectedOptionIndex: isAlreadySelected ? null : optIdx,
-        status: isAlreadySelected
+        textResponse: val,
+        status: !isAttempted
           ? (currentResp.status === 'marked-attempted' ? 'marked' as const : 'unattempted' as const)
           : ((currentResp.status === 'marked' || currentResp.status === 'marked-attempted')
             ? 'marked-attempted' as const
             : 'attempted' as const)
       }
     };
-    
+
     setResponses(updated);
     saveProgress(updated, timeLeftRef.current, currentIndex);
   }, [activeQuestion, responses, currentIndex, saveProgress]);
@@ -265,7 +337,17 @@ function ActiveTestContent() {
     if (!activeQuestion) return;
     const qId = activeQuestion.id;
     const currentResp = responses[qId];
-    const isAnswered = currentResp.selectedOptionIndex !== null;
+    const isMultiple = activeQuestion.type === 'multiple' || (activeQuestion.correctOptionIndices && activeQuestion.correctOptionIndices.length > 0);
+    const isTextBased = activeQuestion.type === 'integer' || activeQuestion.type === 'numeric';
+    
+    let isAnswered = false;
+    if (isTextBased) {
+      isAnswered = !!(currentResp.textResponse && currentResp.textResponse.trim() !== '');
+    } else if (isMultiple) {
+      isAnswered = !!(currentResp.selectedOptionIndices && currentResp.selectedOptionIndices.length > 0);
+    } else {
+      isAnswered = currentResp.selectedOptionIndex !== null;
+    }
 
     const updatedResponses = { ...responses };
     updatedResponses[qId] = {
@@ -385,7 +467,7 @@ function ActiveTestContent() {
   const positiveMarks = test.marks / test.questionsCount;
 
   return (
-    <div className="min-h-screen bg-background-custom text-text-primary-custom flex flex-col justify-between overflow-x-hidden w-full max-w-full box-border select-none">
+    <div className="min-h-screen md:h-screen md:max-h-screen bg-background-custom text-text-primary-custom flex flex-col justify-between overflow-x-hidden md:overflow-hidden w-full max-w-full box-border select-none">
       
       {/* Top Navbar */}
       <header className="border-b border-[#334155]/60 bg-surface-custom/95 backdrop-blur-md sticky top-0 z-40 shadow-md w-full">
@@ -429,23 +511,54 @@ function ActiveTestContent() {
         </div>
       </header>
 
+      {/* Section Tabs Panel */}
+      {sections.length > 1 && (
+        <div className="w-full bg-[#1e293b]/30 border-b border-[#334155]/60 sticky top-[57px] sm:top-[61px] z-30 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 flex items-center overflow-x-auto scrollbar-none gap-2 sm:gap-4 py-2 sm:py-3">
+            {sections.map((secName) => {
+              const isActive = secName === activeSection;
+              
+              // Count stats for this section
+              const secQuestions = questions.filter(q => q.section === secName);
+              const secAttempted = secQuestions.filter(q => responses[q.id]?.selectedOptionIndex !== null).length;
+              const secTotal = secQuestions.length;
+
+              return (
+                <button
+                  key={secName}
+                  onClick={() => handleSectionTabClick(secName)}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all relative outline-none flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 border duration-200 ${
+                    isActive
+                      ? 'bg-primary-custom/10 border-primary-custom/50 text-text-primary-custom shadow-[0_0_12px_rgba(59,130,246,0.15)]'
+                      : 'border-[#334155]/40 text-text-secondary-custom hover:text-text-primary-custom hover:border-primary-custom/20 hover:bg-surface-custom/20'
+                  }`}
+                >
+                  <span>{secName.replace(/Mathematics/gi, 'Maths')}</span>
+                  <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full ${
+                    isActive
+                      ? 'bg-primary-custom/20 text-text-primary-custom font-bold'
+                      : 'bg-surface-custom/60 text-text-secondary-custom/60'
+                  }`}>
+                    {secAttempted}/{secTotal}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Main Grid Section */}
-      <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 flex flex-col md:flex-row gap-6 pb-24 md:pb-6 overflow-x-hidden">
+      <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 flex flex-col md:flex-row gap-6 md:pb-6 overflow-x-hidden md:h-[calc(100vh-130px)] md:overflow-hidden">
         
         {/* Left Side: Question Panel */}
-        <div className="flex-1 flex flex-col justify-between space-y-6 min-w-0">
+        <div className="flex-1 flex flex-col md:h-full md:overflow-hidden justify-between space-y-6 min-w-0">
           {activeQuestion ? (
             <div 
               key={activeQuestion.id}
-              className="space-y-6 animate-fadeIn"
+              className="space-y-6 animate-fadeIn flex-1 md:overflow-y-auto md:pr-2 scrollbar-thin pb-4"
             >
-              {/* Section Header */}
-              {activeQuestion.section && (
-                <div className="bg-surface-custom/70 border border-[#334155]/60 rounded-xl px-4 py-2 inline-flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary-custom"></span>
-                  <span className="text-sm font-bold text-text-primary-custom">{activeQuestion.section}</span>
-                </div>
-              )}
+
               {/* Question Card */}
               <QuestionCard
                 question={activeQuestion}
@@ -455,28 +568,80 @@ function ActiveTestContent() {
                 negativeMarks={test.negativeMarking}
               />
 
-              {/* Answer options */}
-              <div className="grid grid-cols-1 gap-4">
-                {activeQuestion.options.map((opt, i) => (
-                  <OptionCard
-                    key={i}
-                    label={['A', 'B', 'C', 'D'][i]}
-                    content={opt}
-                    isSelected={responses[activeQuestion.id]?.selectedOptionIndex === i}
-                    onClick={() => selectOption(i)}
-                  />
-                ))}
-              </div>
+              {/* Answer options / text inputs */}
+              {(() => {
+                const isTextBased = activeQuestion.type === 'integer' || activeQuestion.type === 'numeric';
+                const isMultiple = activeQuestion.type === 'multiple' || (activeQuestion.correctOptionIndices && activeQuestion.correctOptionIndices.length > 0);
+                
+                if (isTextBased) {
+                  return (
+                    <div className="w-full bg-surface-custom/40 border border-[#334155]/60 rounded-2xl p-6 space-y-4">
+                      <label className="block text-sm font-bold text-text-secondary-custom uppercase tracking-wider">
+                        {activeQuestion.type === 'integer' ? 'Enter Integer Answer' : 'Enter Numerical Answer'}
+                      </label>
+                      <div className="flex gap-4">
+                        <input
+                          type="text"
+                          placeholder={activeQuestion.type === 'integer' ? 'e.g. -5, 12' : 'e.g. 1.25, 4.5'}
+                          value={responses[activeQuestion.id]?.textResponse || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Validation: Allow only integers for 'integer', and decimals for 'numeric'
+                            const regex = activeQuestion.type === 'integer' ? /^-?\d*$/ : /^-?\d*\.?\d*$/;
+                            if (val === '' || regex.test(val)) {
+                              handleTextResponseChange(val);
+                            }
+                          }}
+                          className="flex-1 bg-background-custom border border-[#334155]/60 hover:border-primary-custom/50 focus:border-primary-custom rounded-xl px-4 py-3 text-text-primary-custom text-base font-mono outline-none transition-all"
+                        />
+                        {responses[activeQuestion.id]?.textResponse && (
+                          <button
+                            onClick={() => handleTextResponseChange('')}
+                            className="px-4 py-2 border border-danger-custom/30 text-danger-custom hover:bg-danger-custom/10 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-secondary-custom/40 leading-relaxed italic">
+                        {activeQuestion.type === 'integer'
+                          ? 'Only whole numbers (positive/negative) are allowed.'
+                          : 'Decimals are accepted. Please round off as specified in the question.'
+                        }
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 gap-4">
+                    {activeQuestion.options.map((opt, i) => {
+                      const isSelected = isMultiple
+                        ? (responses[activeQuestion.id]?.selectedOptionIndices || []).includes(i)
+                        : responses[activeQuestion.id]?.selectedOptionIndex === i;
+
+                      return (
+                        <OptionCard
+                          key={i}
+                          label={['A', 'B', 'C', 'D'][i]}
+                          content={opt}
+                          isSelected={isSelected}
+                          onClick={() => selectOption(i)}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <EmptyState title="End of Test" message="You have navigated past all questions. Open palette to submit." />
           )}
 
-          {/* Spacer to push buttons down on desktop */}
-          <div className="hidden md:block flex-grow" />
+
 
           {/* Desktop & Tablet Action Bar (contained inside the question column) */}
-          <div className="hidden md:flex items-center justify-between gap-4 border-t border-[#334155]/40 pt-4 bg-background-custom sticky bottom-0 z-20">
+          <div className="hidden md:flex items-center justify-between gap-4 border-t border-[#334155]/40 pt-4 bg-background-custom shrink-0 z-20 mt-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={handlePrevious}
@@ -507,7 +672,7 @@ function ActiveTestContent() {
         </div>
 
         {/* Right Side: Palette Panel (pinned on desktop, drawer on mobile) */}
-        <div className="hidden md:block w-80 shrink-0">
+        <div className="hidden md:block w-80 shrink-0 md:h-full">
           <QuestionPalette
             questions={questions}
             responses={responses}

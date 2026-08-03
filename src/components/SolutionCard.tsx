@@ -10,12 +10,31 @@ interface SolutionCardProps {
 }
 
 export default function SolutionCard({ question, response, questionNumber }: SolutionCardProps) {
+  const isMultiple = question.correctOptionIndices && question.correctOptionIndices.length > 0;
+  const isTextBased = question.type === 'integer' || question.type === 'numeric';
+
   const selectedIdx = response?.selectedOptionIndex ?? null;
   const correctIdx = question.correctOptionIndex;
   
-  const isAttempted = selectedIdx !== null;
-  const isCorrect = isAttempted && selectedIdx === correctIdx;
-  const isWrong = isAttempted && selectedIdx !== correctIdx;
+  let isAttempted = false;
+  let isCorrect = false;
+  let isWrong = false;
+
+  if (isTextBased) {
+    isAttempted = !!(response?.textResponse && response.textResponse.trim() !== '');
+    isCorrect = isAttempted && response?.textResponse?.trim() === question.correctTextResponse?.trim();
+    isWrong = isAttempted && !isCorrect;
+  } else if (isMultiple) {
+    const selected = response?.selectedOptionIndices || [];
+    const correct = question.correctOptionIndices || [];
+    isAttempted = selected.length > 0;
+    isCorrect = isAttempted && selected.length === correct.length && selected.every(val => correct.includes(val));
+    isWrong = isAttempted && !isCorrect;
+  } else {
+    isAttempted = selectedIdx !== null;
+    isCorrect = isAttempted && selectedIdx === correctIdx;
+    isWrong = isAttempted && selectedIdx !== correctIdx;
+  }
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -111,26 +130,59 @@ export default function SolutionCard({ question, response, questionNumber }: Sol
         )}
       </div>
 
-      {/* Answer Options Checklist Grid */}
-      <div className="grid grid-cols-1 gap-3 mt-4">
-        {question.options.map((opt, idx) => {
-          const isSelected = selectedIdx === idx;
-          const isOptCorrect = idx === correctIdx;
-          const isOptWrong = isSelected && !isOptCorrect;
-
+      {/* Answer Options Checklist / Text Comparison */}
+      {(() => {
+        if (isTextBased) {
           return (
-            <OptionCard
-              key={idx}
-              label={getLabel(idx)}
-              content={opt}
-              isSelected={isSelected}
-              isCorrect={isOptCorrect}
-              isWrong={isOptWrong}
-              disabled={true}
-            />
+            <div className="bg-background-custom/40 border border-[#334155]/60 rounded-xl p-5 space-y-3 font-mono text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-text-secondary-custom">Correct Answer:</span>
+                <span className="text-success-custom font-bold text-base">{question.correctTextResponse}</span>
+              </div>
+              <div className="flex justify-between items-center border-t border-[#334155]/30 pt-3">
+                <span className="text-text-secondary-custom">Your Response:</span>
+                <span className={isCorrect ? 'text-success-custom font-bold text-base' : isWrong ? 'text-danger-custom font-bold text-base' : 'text-text-secondary-custom/60 font-bold text-base'}>
+                  {response?.textResponse && response.textResponse.trim() !== '' ? response.textResponse : 'Not Attempted'}
+                </span>
+              </div>
+            </div>
           );
-        })}
-      </div>
+        }
+
+        return (
+          <div className="grid grid-cols-1 gap-3 mt-4">
+            {question.options.map((opt, idx) => {
+              let isSelected = false;
+              let isOptCorrect = false;
+              let isOptWrong = false;
+
+              if (isMultiple) {
+                const selected = response?.selectedOptionIndices || [];
+                const correct = question.correctOptionIndices || [];
+                isSelected = selected.includes(idx);
+                isOptCorrect = correct.includes(idx);
+                isOptWrong = isSelected && !isOptCorrect;
+              } else {
+                isSelected = selectedIdx === idx;
+                isOptCorrect = idx === correctIdx;
+                isOptWrong = isSelected && !isOptCorrect;
+              }
+
+              return (
+                <OptionCard
+                  key={idx}
+                  label={getLabel(idx)}
+                  content={opt}
+                  isSelected={isSelected}
+                  isCorrect={isOptCorrect}
+                  isWrong={isOptWrong}
+                  disabled={true}
+                />
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Detailed Explanation Section */}
       <div className="bg-background-custom/70 border border-[#334155]/40 rounded-xl p-5 mt-5 space-y-3">
