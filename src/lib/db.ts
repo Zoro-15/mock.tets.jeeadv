@@ -2,6 +2,82 @@ import { Test, Attempt, Question, QuestionResponse, LeaderboardEntry, User } fro
 import { allTests, generateQuestionsForTest } from './mockData';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
+let cachedUniqueTestNames: string[] | null = null;
+
+function findDatabaseTestName(test: Test, uniqueNames: string[]): string | null {
+  // If the test has an explicit sourceFileName configured, check it first
+  if (test.sourceFileName && uniqueNames.includes(test.sourceFileName)) {
+    return test.sourceFileName;
+  }
+
+  const titleLower = test.title.toLowerCase();
+
+  // 1. JEE Main mapping
+  if (test.category === 'jee_main') {
+    const yearMatch = test.title.match(/(20\d{2})/);
+    const year = yearMatch ? yearMatch[1] : '';
+    const dateMatch = test.title.match(/(\d+)\s+(January|April|June|July|February|March|September)/i);
+    const date = dateMatch ? dateMatch[1] : '';
+    const month = dateMatch ? dateMatch[2].substring(0, 3) : ''; // e.g. "Jan"
+    const shiftMatch = test.title.match(/(Shift \d+)/i);
+    const shift = shiftMatch ? shiftMatch[1] : '';
+
+    if (year && date && month && shift) {
+      const matched = uniqueNames.find(name => {
+        const nLower = name.toLowerCase();
+        return nLower.includes('main') &&
+               nLower.includes(year) &&
+               nLower.includes(date) &&
+               nLower.includes(month.toLowerCase()) &&
+               nLower.includes(shift.toLowerCase());
+      });
+      if (matched) return matched;
+    }
+  }
+
+  // 2. JEE Advanced mapping
+  if (test.category === 'jee_advanced') {
+    const yearMatch = test.title.match(/(20\d{2})/);
+    const year = yearMatch ? yearMatch[1] : '';
+    const paperMatch = test.title.match(/Paper\s*(\d)/i);
+    const paperNum = paperMatch ? paperMatch[1] : '';
+
+    if (year && paperNum) {
+      const matched = uniqueNames.find(name => {
+        const nLower = name.toLowerCase();
+        return nLower.includes('advanced') &&
+               nLower.includes(year) &&
+               (nLower.includes(`paper ${paperNum}`) || nLower.includes(`paper-${paperNum}`));
+      });
+      if (matched) return matched;
+    }
+  }
+
+  // 3. Exemplar mapping
+  if (test.category === 'exemplar') {
+    const parts = test.title.split(':');
+    const chapterName = parts.length > 1 ? parts[1].trim() : test.title;
+    const cleanChapter = chapterName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const matched = uniqueNames.find(name => {
+      const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return cleanName.includes(cleanChapter) || cleanChapter.includes(cleanName) ||
+             (cleanChapter.startsWith('probability') && cleanName.startsWith('probability')) ||
+             (cleanChapter.startsWith('threedimensional') && cleanName.startsWith('threedimensional')) ||
+             (cleanChapter.startsWith('three-dimensional') && cleanName.startsWith('three-dimensional'));
+    });
+    if (matched) return matched;
+  }
+
+  const cleanTitle = test.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const matchedDirect = uniqueNames.find(name => {
+    const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return cleanName.includes(cleanTitle) || cleanTitle.includes(cleanName);
+  });
+  
+  return matchedDirect || null;
+}
+
 const USER_SESSION_KEY = 'jee_mock_user_session';
 const ATTEMPTS_KEY = 'jee_mock_attempts';
 
@@ -209,26 +285,42 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
 
   if (isSupabaseConfigured && supabase) {
     try {
+      if (!cachedUniqueTestNames) {
+        const { data: nameData, error: nameError } = await supabase
+          .from('jee_questions')
+          .select('Test_Name');
+        if (!nameError && nameData) {
+          cachedUniqueTestNames = Array.from(new Set(nameData.map((r: any) => r.Test_Name)));
+        }
+      }
+
+      let matchedTestName: string | null = null;
+      if (cachedUniqueTestNames) {
+        matchedTestName = findDatabaseTestName(test, cachedUniqueTestNames);
+      }
+
       let query = supabase.from('jee_questions').select('*');
       
-      // If we have an exact sourceFileName configured, match it directly!
-      if (test.sourceFileName) {
-        query = query.eq('Test_Name', test.sourceFileName);
+      if (matchedTestName) {
+        query = query.eq('Test_Name', matchedTestName);
       } else {
-        // Fallback fuzzy search rules
-        if (test.category === 'exemplar') {
-          query = query.ilike('Test_Name', `%${test.title.replace(/chapter\s+/gi, '')}%`);
-        } else if (test.category === 'jee_main') {
-          const match = test.title.match(/(20\d{2})/);
-          const year = match ? match[1] : '';
-          if (year) {
-            query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%main%');
-          }
-        } else if (test.category === 'jee_advanced') {
-          const match = test.title.match(/(20\d{2})/);
-          const year = match ? match[1] : '';
-          if (year) {
-            query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%advanced%');
+        if (test.sourceFileName) {
+          query = query.eq('Test_Name', test.sourceFileName);
+        } else {
+          if (test.category === 'exemplar') {
+            query = query.ilike('Test_Name', `%${test.title.replace(/chapter\s+/gi, '')}%`);
+          } else if (test.category === 'jee_main') {
+            const match = test.title.match(/(20\d{2})/);
+            const year = match ? match[1] : '';
+            if (year) {
+              query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%main%');
+            }
+          } else if (test.category === 'jee_advanced') {
+            const match = test.title.match(/(20\d{2})/);
+            const year = match ? match[1] : '';
+            if (year) {
+              query = query.ilike('Test_Name', `%${year}%`).ilike('Test_Name', '%advanced%');
+            }
           }
         }
       }
@@ -237,8 +329,6 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Fuzzy search might match multiple files
-        // We isolate the best matching source file
         const uniqueSourceFiles = Array.from(new Set(data.map((r: any) => r.Test_Name)));
         let selectedSourceFile = uniqueSourceFiles[0];
 
