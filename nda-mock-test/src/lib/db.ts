@@ -2,8 +2,8 @@ import { Test, Attempt, Question, QuestionResponse, LeaderboardEntry, User } fro
 import { allTests, generateQuestionsForTest } from './mockData';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
-const USER_SESSION_KEY = 'jee_mock_user_session';
-const ATTEMPTS_KEY = 'jee_mock_attempts';
+const USER_SESSION_KEY = 'nda_mock_user_session';
+const ATTEMPTS_KEY = 'nda_mock_attempts';
 
 // ========================================================
 // 0. TEST CONFIGURATIONS AND LOOKUP
@@ -75,7 +75,7 @@ export async function loginUser(studentCode: string): Promise<{ success: boolean
         const user: User = {
           id: data.id,
           name: data.name,
-          rollNumber: data.cadet_number, // Map db cadet_number to rollNumber
+          cadetNumber: data.cadet_number,
           studentCode: data.student_code
         };
 
@@ -99,27 +99,27 @@ export async function loginUser(studentCode: string): Promise<{ success: boolean
   return { success: false, error: 'Offline PIN not found. Please register.' };
 }
 
-export async function registerUser(name: string, rollNumber: string, studentCode: string): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function registerUser(name: string, cadetNumber: string, studentCode: string): Promise<{ success: boolean; user?: User; error?: string }> {
   const deviceToken = getOrGenerateDeviceToken();
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // Check if roll number or code already exists in Supabase
+      // Check if cadet number or code already exists in Supabase
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .or(`cadet_number.eq.${rollNumber},student_code.eq.${studentCode}`)
+        .or(`cadet_number.eq.${cadetNumber},student_code.eq.${studentCode}`)
         .limit(1);
 
       if (existingUser && existingUser.length > 0) {
-        return { success: false, error: 'Roll Number or PIN already registered.' };
+        return { success: false, error: 'Cadet Number or PIN already registered.' };
       }
 
       const { data, error } = await supabase
         .from('users')
         .insert([{
           name,
-          cadet_number: rollNumber,
+          cadet_number: cadetNumber,
           student_code: studentCode,
           device_token: deviceToken,
           last_login: new Date().toISOString()
@@ -133,7 +133,7 @@ export async function registerUser(name: string, rollNumber: string, studentCode
         const user: User = {
           id: data.id,
           name: data.name,
-          rollNumber: data.cadet_number,
+          cadetNumber: data.cadet_number,
           studentCode: data.student_code
         };
 
@@ -148,15 +148,15 @@ export async function registerUser(name: string, rollNumber: string, studentCode
 
   // Local storage offline fallback registration
   const fallbackUsers = getFallbackUsers();
-  const exists = fallbackUsers.some(u => u.rollNumber === rollNumber || u.studentCode === studentCode);
+  const exists = fallbackUsers.some(u => u.cadetNumber === cadetNumber || u.studentCode === studentCode);
   if (exists) {
-    return { success: false, error: 'Roll Number or PIN already registered locally.' };
+    return { success: false, error: 'Cadet Number or PIN already registered locally.' };
   }
 
   const localUser: User = {
     id: `local-user-${Date.now()}`,
     name,
-    rollNumber,
+    cadetNumber,
     studentCode
   };
 
@@ -170,7 +170,7 @@ export async function registerUser(name: string, rollNumber: string, studentCode
 function getFallbackUsers(): User[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem('jee_mock_fallback_users');
+    const raw = localStorage.getItem('nda_mock_fallback_users');
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     return [];
@@ -180,16 +180,16 @@ function getFallbackUsers(): User[] {
 function saveFallbackUsers(users: User[]) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem('jee_mock_fallback_users', JSON.stringify(users));
+    localStorage.setItem('nda_mock_fallback_users', JSON.stringify(users));
   } catch (e) {}
 }
 
 function getOrGenerateDeviceToken(): string {
   if (typeof window === 'undefined') return '';
-  let token = localStorage.getItem('jee_mock_device_token');
+  let token = localStorage.getItem('nda_mock_device_token');
   if (!token) {
     token = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
-    localStorage.setItem('jee_mock_device_token', token);
+    localStorage.setItem('nda_mock_device_token', token);
   }
   return token;
 }
@@ -216,19 +216,45 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
         query = query.eq('source_file', test.sourceFileName);
       } else {
         // Fallback fuzzy search rules
-        if (test.category === 'exemplar') {
-          query = query.ilike('source_file', `%${test.title.replace(/chapter\s+/gi, '')}%`);
-        } else if (test.category === 'jee_main') {
-          const match = test.title.match(/(20\d{2})/);
-          const year = match ? match[1] : '';
-          if (year) {
-            query = query.ilike('source_file', `%${year}%`).ilike('source_file', '%main%');
+        if (test.category === 'maths_pack') {
+          if (test.subCategory === 'chapter') {
+            const idxMatch = test.title.match(/CT (\d+)/);
+            const idx = idxMatch ? idxMatch[1] : '';
+            if (idx) {
+              query = query.or(`source_file.ilike.%CT ${idx}_%,source_file.ilike.%CT ${idx}.%,source_file.ilike.%CT_${idx}%`);
+            } else {
+              query = query.ilike('source_file', `%${test.title.replace(/NDA\s+/gi, '')}%`);
+            }
+          } else if (test.subCategory === 'subject') {
+            const match = test.title.match(/ST (\d+)/);
+            const num = match ? match[1] : '';
+            if (num) {
+              query = query.ilike('source_file', `%ST ${num}_%`);
+            } else {
+              const match2 = test.title.match(/ST \d+: (.+)/);
+              const subjName = match2 ? match2[1] : '';
+              if (subjName) {
+                query = query.ilike('source_file', `%${subjName}%`);
+              }
+            }
           }
-        } else if (test.category === 'jee_advanced') {
+        } else if (test.category === 'pyp') {
           const match = test.title.match(/(20\d{2})/);
           const year = match ? match[1] : '';
+          const isMath = test.subCategory === 'math';
           if (year) {
-            query = query.ilike('source_file', `%${year}%`).ilike('source_file', '%advanced%');
+            query = query.ilike('source_file', `%${year}%`).ilike('source_file', isMath ? '%math%' : '%gat%');
+          }
+        } else if (test.category === 'full_mock') {
+          const match = test.title.match(/Test (\d+)/);
+          const num = match ? match[1] : '';
+          const isMath = test.subCategory === 'math';
+          if (num) {
+            query = query
+              .ilike('source_file', `%FT ${num}_%`)
+              .ilike('source_file', isMath ? '%math%' : '%general%');
+          } else {
+            query = query.ilike('source_file', isMath ? '%math%' : '%general%');
           }
         }
       }
@@ -237,17 +263,17 @@ export async function getQuestionsForTest(testId: string): Promise<Question[]> {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Fuzzy search might match multiple files
-        // We isolate the best matching source file
+        // Fuzzy search might match multiple files (e.g. both Paper I and II for 2024)
+        // We isolate the best matching source file to prevent 300-question combinations.
         const uniqueSourceFiles = Array.from(new Set(data.map((r: any) => r.source_file)));
         let selectedSourceFile = uniqueSourceFiles[0];
 
-        if (uniqueSourceFiles.length > 1 && (test.category === 'jee_main' || test.category === 'jee_advanced')) {
-          const shiftMatch = test.title.match(/(Shift \d+|Paper \d+)/i);
-          const matchVal = shiftMatch ? shiftMatch[1] : null;
-          if (matchVal) {
+        if (uniqueSourceFiles.length > 1 && test.category === 'pyp') {
+          const halfMatch = test.title.match(/NDA-(I|II)/);
+          const half = halfMatch ? halfMatch[1] : null;
+          if (half) {
             const matchedFile = uniqueSourceFiles.find((sf: any) => 
-              typeof sf === 'string' && (sf.toLowerCase().includes(matchVal.toLowerCase()))
+              typeof sf === 'string' && (sf.includes(`-${half}`) || sf.includes(`_${half}_`) || sf.includes(` ${half} `) || sf.includes(`${half}_`))
             );
             if (matchedFile) {
               selectedSourceFile = matchedFile;
@@ -547,7 +573,7 @@ export async function getLeaderboardForTest(testId: string): Promise<Leaderboard
           score: Number(row.score),
           accuracy: Number(row.accuracy),
           timeTaken: formatDuration(row.time_taken),
-          isCurrentUser: currentUser ? row.cadet_number === currentUser.rollNumber : false
+          isCurrentUser: currentUser ? row.cadet_number === currentUser.cadetNumber : false
         }));
       }
     } catch (err) {
@@ -572,13 +598,13 @@ function formatDuration(totalSeconds: number): string {
 
 const MOTIVATIONAL_QUOTES = [
   "Discipline is choosing between what you want now and what you want most.",
-  "Every equation solved today brings you one step closer to IIT.",
-  "Focus on the concepts, speed and accuracy will follow.",
-  "JEE is not just an exam, it's a test of resilience, consistency, and passion.",
-  "Success in JEE isn't about being the smartest; it's about being the most persistent.",
-  "The doors of IIT open to those who dare to dream and refuse to yield.",
-  "Sweat more in practice, score higher in the exam.",
-  "Mistakes are proof that you are trying. Analyze them and keep going."
+  "Every question solved today brings you one step closer to the Academy.",
+  "The National Defence Academy is not just a campus; it is a cradle of leadership.",
+  "Service Before Self - Let this motto guide your preparation every single day.",
+  "Sweat more in peace, bleed less in war.",
+  "Your efforts today will define the prefix 'Lieutenant' or 'Flying Officer' tomorrow.",
+  "Courage is not the absence of fear, but the triumph over it.",
+  "The Academy doors open only to those who refuse to give up."
 ];
 
 export function getMotivationalQuote(): string {

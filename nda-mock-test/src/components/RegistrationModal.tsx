@@ -10,7 +10,7 @@ interface RegistrationModalProps {
 export default function RegistrationModal({ onSuccess }: RegistrationModalProps) {
   const [activeTab, setActiveTab] = useState<'register' | 'login'>('register');
   const [name, setName] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
+  const [cadetNumber, setCadetNumber] = useState('');
   const [studentCode, setStudentCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +33,13 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
         setLoading(false);
         return;
       }
-      if (!rollNumber.trim()) {
-        setError('Please enter your JEE Roll Number.');
+      if (!cadetNumber.trim()) {
+        setError('Please enter your Cadet Number.');
         setLoading(false);
         return;
       }
 
-      const res = await registerUser(name.trim(), rollNumber.trim().toUpperCase(), studentCode);
+      const res = await registerUser(name.trim(), cadetNumber.trim().toUpperCase(), studentCode);
       if (res.success) {
         onSuccess();
       } else {
@@ -66,9 +66,9 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
         <div className="text-center space-y-2">
           {/* Circular Badge */}
           <div className="w-12 h-12 bg-primary-custom/10 text-primary-custom border border-primary-custom/20 rounded-xl flex items-center justify-center mx-auto text-xl font-bold">
-            🎓
+            ⚔️
           </div>
-          <h2 className="text-xl font-extrabold text-text-primary-custom">Aspirant Portal Registration</h2>
+          <h2 className="text-xl font-extrabold text-text-primary-custom">Cadet Portal Registration</h2>
           <p className="text-xs text-text-secondary-custom/60 leading-relaxed">
             Enter your details to track attempts and compete on the leaderboard.
           </p>
@@ -87,7 +87,7 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
                 : 'text-text-secondary-custom hover:text-text-primary-custom'
             }`}
           >
-            Register Aspirant
+            Register Cadet
           </button>
           <button
             onClick={() => {
@@ -130,13 +130,13 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
-                  JEE Roll Number / Roll ID
+                  Cadet Number / Roll ID
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter JEE Roll ID (e.g. JEE-2026-001)"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
+                  placeholder="Enter Cadet Code (e.g. C-1095)"
+                  value={cadetNumber}
+                  onChange={(e) => setCadetNumber(e.target.value)}
                   className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-sm focus:outline-none focus:border-primary-custom transition-colors"
                 />
               </div>

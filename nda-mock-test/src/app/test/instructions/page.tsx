@@ -88,9 +88,10 @@ function InstructionsContent() {
         <div className="bg-surface-custom border border-[#334155]/60 rounded-2xl p-6 sm:p-8 space-y-8 shadow-xl">
           {/* Title Section */}
           <div className="border-b border-[#334155]/60 pb-5 space-y-1">
-            <span className="text-xs font-bold text-primary-custom uppercase tracking-wider">JEE Preparation</span>
+            <span className="text-xs font-bold text-primary-custom uppercase tracking-wider">NDA Preparation</span>
             <h2 className="text-xl sm:text-2xl font-black text-text-primary-custom">{test.title}</h2>
           </div>
+
           {/* Test Metadata Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-background-custom/40 border border-[#334155]/30 rounded-xl p-4 font-mono text-center">
             <div className="space-y-0.5">
@@ -159,7 +160,7 @@ function InstructionsContent() {
 
       {/* Footer */}
       <footer className="max-w-3xl w-full mx-auto px-4 py-6 text-center text-xs text-text-secondary-custom/40 border-t border-[#334155]/30">
-        JEE Mock Test Platform Instructions &copy; {new Date().getFullYear()}
+        NDA Mock Test Platform Instructions &copy; {new Date().getFullYear()}
       </footer>
     </div>
   );

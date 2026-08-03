@@ -10,9 +10,8 @@ export interface TopicInsight {
   accuracy: number; // percentage
 }
 
-// Highly granular keyword matcher for chapter-wise JEE syllabus
+// Highly granular keyword matcher for chapter-wise NDA syllabus
 const TOPIC_KEYWORDS: Record<string, string[]> = {
-  // Mathematics
   'Matrices & Determinants': ['matrix', 'determinant', 'adjoint', 'inverse matrix', 'singular'],
   'Sets, Relations & Functions': ['set', 'relation', 'function', 'subset', 'domain', 'range', 'injective', 'surjective'],
   'Complex Numbers': ['complex number', 'iota', 'argand', 'modulus', 'argument', 'conjugate'],
@@ -20,27 +19,16 @@ const TOPIC_KEYWORDS: Record<string, string[]> = {
   'Sequence & Series': ['progression', 'arithmetic', 'geometric', 'harmonic', 'series', 'sequence', 'a.p', 'g.p', 'sum to n terms'],
   'Permutations & Combinations': ['permutation', 'combination', 'arrange', 'select', 'factorial', 'ways to choose'],
   'Binomial Theorem': ['binomial', 'expansion', 'coefficient'],
+  'Logarithms': ['logarithm', 'log ', 'ln '],
   'Trigonometry': ['sin', 'cos', 'tan', 'triangle', 'angle', 'radian', 'height', 'distance', 'inverse', 'sec', 'csc', 'cot'],
   'Differential Calculus': ['derivative', 'limit', 'continuous', 'differentiable', 'dy/dx', 'maxima', 'minima', 'tangent', 'normal'],
   'Integral Calculus': ['integral', 'integrate', 'area under', 'differential equation', 'dx'],
   '2D & 3D Geometry': ['line', 'plane', 'circle', 'parabola', 'ellipse', 'hyperbola', 'coordinate', 'distance formula', 'direction ratio', 'direction cosine'],
   'Vector Algebra': ['vector', 'magnitude', 'dot product', 'cross product', 'scalar triple', 'coplanar'],
   'Statistics & Probability': ['mean', 'median', 'mode', 'variance', 'standard deviation', 'probability', 'dice', 'coin', 'card', 'mutually exclusive', 'bayes'],
-  
-  // Physics
-  'Electrostatics & Capacitance': ['charge', 'electrostatic', 'dipole', 'potential', 'capacitance', 'capacitor', 'field line', 'coulomb'],
-  'Current Electricity': ['current', 'resistor', 'ohms law', 'resistance', 'kirchhoff', 'potentiometer', 'drift velocity'],
-  'Magnetism & EMI': ['magnetic', 'magnetism', 'induction', 'solenoid', 'lorentz', 'faradays law', 'lens law', 'alternating current', 'ac circuit'],
-  'Mechanics': ['inclined plane', 'motion', 'projectile', 'force', 'acceleration', 'velocity', 'work', 'energy', 'power', 'torque', 'rotation', 'rotational', 'gravitation', 'solid', 'fluid', 'viscosity', 'surface tension'],
-  'Optics & Waves': ['lens', 'mirror', 'optics', 'reflection', 'refraction', 'prism', 'interference', 'diffraction', 'wave', 'oscillation', 'shm', 'organ pipe', 'doppler'],
-  'Thermodynamics': ['heat', 'temperature', 'carnot', 'entropy', 'thermodynamic', 'efficiency', 'kinetic theory', 'gas law'],
-  'Modern Physics': ['de broglie', 'wavelength', 'photoelectric', 'work function', 'atom', 'nuclei', 'radioactive', 'half-life', 'semiconductor', 'diode', 'gate'],
-
-  // Chemistry
-  'Atomic Structure & Bonding': ['atom', 'orbital', 'quantum number', 'hybridization', 'bonding', 'molecular structure', 'dipole moment', 'periodic'],
-  'Physical Chemistry': ['equilibrium', 'thermodynamics', 'redox', 'reaction', 'rate constant', 'half-life', 'order of', 'activation energy', 'kinetics', 'solutions', 'solubility', 'osmotic', 'electrochemistry', 'cell', 'conductance'],
-  'Inorganic Chemistry': ['p-block', 'd-block', 'f-block', 'coordination', 'ligand', 'isomerism', 'metallurgy', 'extraction'],
-  'Organic Chemistry': ['aromatic', 'benzene', 'organic', 'alkane', 'alkene', 'alkyne', 'alcohol', 'phenol', 'ether', 'aldehyde', 'ketone', 'carboxylic', 'amine', 'haloalkane', 'hydration', 'addition', 'substitution']
+  'English Language': ['synonym', 'antonym', 'idiom', 'phrase', 'grammar', 'spot the error', 'sentence improvement', 'comprehension'],
+  'Physics & Chemistry': ['force', 'velocity', 'acceleration', 'light', 'sound', 'electricity', 'magnet', 'atom', 'molecule', 'acid', 'base', 'reaction', 'optics'],
+  'General Studies': ['history', 'geography', 'polity', 'constitution', 'economy', 'current affairs', 'war', 'treaty', 'article', 'cell', 'disease']
 };
 
 export function generateSubjectAnalytics(
@@ -96,4 +84,3 @@ export function generateSubjectAnalytics(
   // Sort by total questions descending to show most prominent topics first
   return result.sort((a, b) => b.total - a.total);
 }
-

@@ -3,8 +3,8 @@ import './globals.css';
 import 'katex/dist/katex.min.css';
 
 export const metadata: Metadata = {
-  title: 'JEE Mock Test Platform',
-  description: 'A modern, responsive mock test platform for JEE Main & JEE Advanced aspirants.',
+  title: 'NDA Mock Test Platform',
+  description: 'A modern, responsive mock test platform for NDA aspirants.',
   icons: {
     icon: '/icon.svg',
   },

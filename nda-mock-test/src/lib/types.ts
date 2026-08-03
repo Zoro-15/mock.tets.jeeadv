@@ -13,8 +13,8 @@ export interface Question {
   section?: string;        // E.g., 'Section A: English', 'Section B: GK'
 }
 
-export type TestCategory = 'exemplar' | 'jee_main' | 'jee_advanced';
-export type TestSubCategory = 'class11' | 'class12' | 'physics' | 'chemistry' | 'math' | 'paper1' | 'paper2' | 'both';
+export type TestCategory = 'pyp' | 'maths_pack' | 'full_mock';
+export type TestSubCategory = 'math' | 'gat' | 'chapter' | 'subject';
 
 export interface Test {
   id: string;
@@ -24,12 +24,9 @@ export interface Test {
   questionsCount: number;
   duration: number; // in minutes
   marks: number;
-  negativeMarking: number; // raw value to subtract
+  negativeMarking: number; // raw value to subtract (e.g. 0.83 for Math, 1.33 for GAT)
   syllabus?: string[];
   sourceFileName?: string;
-  subject?: 'physics' | 'chemistry' | 'math'; // Additional field for NCERT exemplar grouping
-  year?: number;
-  session?: string;
 }
 
 export interface QuestionResponse {
@@ -69,7 +66,6 @@ export interface LeaderboardEntry {
 export interface User {
   id: string;
   name: string;
-  rollNumber: string;
+  cadetNumber: string;
   studentCode: string;
 }
-

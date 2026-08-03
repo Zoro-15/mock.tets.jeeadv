@@ -95,16 +95,15 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <span className="font-extrabold text-lg text-text-primary-custom tracking-tight block leading-tight">JEE Mock</span>
+              <span className="font-extrabold text-lg text-text-primary-custom tracking-tight block leading-tight">NDA Mock</span>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-text-secondary-custom">
+          <nav className="hidden sm:flex items-center gap-6 text-sm font-semibold text-text-secondary-custom">
             <Link href="/" className="text-primary-custom transition-colors">Home</Link>
-            <Link href="/ncert-exemplar" className="hover:text-text-primary-custom transition-colors">NCERT Exemplar</Link>
-            <Link href="/jee-main" className="hover:text-text-primary-custom transition-colors">JEE Main</Link>
-            <Link href="/jee-advanced" className="hover:text-text-primary-custom transition-colors">JEE Advanced</Link>
-            <Link href="/analytics" className="hover:text-text-primary-custom transition-colors">Analytics</Link>
+            <Link href="/previous-year" className="hover:text-text-primary-custom transition-colors">PY Papers</Link>
+            <Link href="/maths-pack" className="hover:text-text-primary-custom transition-colors">Math Pack</Link>
+            <Link href="/full-mocks" className="hover:text-text-primary-custom transition-colors">Full Mocks</Link>
           </nav>
 
           {/* Profile & Logout Panel */}
@@ -115,7 +114,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2.5 text-xs font-semibold">
                   <div className="text-text-secondary-custom hidden xs:block text-right">
                     <div className="text-text-primary-custom font-bold">{currentUser.name}</div>
-                    <div className="text-[10px] text-text-secondary-custom/60 font-mono">{currentUser.rollNumber}</div>
+                    <div className="text-[10px] text-text-secondary-custom/60 font-mono">{currentUser.cadetNumber}</div>
                   </div>
                   <div className="w-7 h-7 rounded-full bg-[#dfdcd4] border border-[#c7c4b8] flex items-center justify-center font-bold text-[#111827] shadow-sm select-none">
                     {currentUser.name[0].toUpperCase()}
@@ -143,45 +142,14 @@ export default function HomePage() {
           </h1>
         </section>
 
-        {/* Continue Learning & Analytics Quick View */}
+        {/* Continue Learning card */}
         {currentUser && (
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            <div className="md:col-span-2">
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <ContinueLearningCard unfinishedAttempt={unfinishedAttempt} test={associatedTest} />
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between h-[28px]">
-                <h2 className="text-lg font-semibold text-text-primary-custom">Analytics</h2>
-                <Link href="/analytics" className="text-xs text-primary-custom hover:underline font-bold transition-all">
-                  Dashboard &rarr;
-                </Link>
-              </div>
-
-              <Link 
-                href="/analytics"
-                className="group p-5 bg-surface-custom border border-[#334155]/60 hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.12)] transition-all rounded-2xl flex flex-col justify-between cursor-pointer min-h-[96px] sm:min-h-[106px]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary-custom/10 rounded-lg flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-text-primary-custom">Performance</h3>
-                    <p className="text-[10px] text-text-secondary-custom/60 font-bold uppercase tracking-wider">Avg. Accuracy: 68.5%</p>
-                  </div>
-                </div>
-                <div className="text-[11px] text-text-secondary-custom/70 font-semibold leading-relaxed mt-2">
-                  Track statistics, bookmarks, and weak chapters.
-                </div>
-              </Link>
-            </div>
+          <section className="space-y-4">
+            {loading ? (
+              <LoadingSpinner />
+            ) : (
+              <ContinueLearningCard unfinishedAttempt={unfinishedAttempt} test={associatedTest} />
+            )}
           </section>
         )}
 
@@ -191,74 +159,74 @@ export default function HomePage() {
           
           <div className="flex flex-col gap-4">
             
-            {/* NCERT Exemplar */}
+            {/* Previous Year Papers */}
             <Link 
-              href="/ncert-exemplar"
+              href="/previous-year"
               className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
             >
-              <div className="flex items-start sm:items-center gap-4">
-                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5 sm:mt-0">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
                   </svg>
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-text-primary-custom">NCERT Exemplar</h3>
-                  <p className="text-xs text-text-secondary-custom leading-relaxed">
-                    Practice chapter-wise NCERT Exemplar questions from Class 11 and Class 12.
+                  <h3 className="text-base font-bold text-text-primary-custom">Previous Year Papers</h3>
+                  <p className="text-xs text-text-secondary-custom">
+                    PYQ From 2015-2025 [ 21+21 ]
                   </p>
                 </div>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-3 text-primary-custom font-semibold text-xs pt-3 sm:pt-0 border-t sm:border-t-0 border-[#334155]/20 mt-3 sm:mt-0 shrink-0">
-                <span>76 Chapter Tests Available</span>
+                <span>42 Papers Available</span>
                 <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </div>
             </Link>
 
-            {/* JEE Main PYP */}
+            {/* Mathematics Super Pack */}
             <Link 
-              href="/jee-main"
+              href="/maths-pack"
               className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
             >
-              <div className="flex items-start sm:items-center gap-4">
-                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5 sm:mt-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 12.408 9-9m-9 0 9 9" />
-                  </svg>
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-text-primary-custom">JEE Main PYP</h3>
-                  <p className="text-xs text-text-secondary-custom leading-relaxed">
-                    Practice official JEE Main previous year papers year-wise.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between sm:justify-end gap-3 text-primary-custom font-semibold text-xs pt-3 sm:pt-0 border-t sm:border-t-0 border-[#334155]/20 mt-3 sm:mt-0 shrink-0">
-                <span>134 Papers Available</span>
-                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
-              </div>
-            </Link>
-
-            {/* JEE Advanced PYP */}
-            <Link 
-              href="/jee-advanced"
-              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
-            >
-              <div className="flex items-start sm:items-center gap-4">
-                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5 sm:mt-0">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-3-3.675v3.675m-3-3v3m3-10.75a9 9 0 1 1-9 9 9 9 0 0 1 9-9Z" />
                   </svg>
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-text-primary-custom">JEE Advanced PYP</h3>
-                  <p className="text-xs text-text-secondary-custom leading-relaxed">
-                    Practice official JEE Advanced papers.
+                  <h3 className="text-base font-bold text-text-primary-custom">Mathematics Super Pack</h3>
+                  <p className="text-xs text-text-secondary-custom">
+                    31 Chapter Wise + 5 Subject Test
                   </p>
                 </div>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-3 text-primary-custom font-semibold text-xs pt-3 sm:pt-0 border-t sm:border-t-0 border-[#334155]/20 mt-3 sm:mt-0 shrink-0">
-                <span>10 Papers Available</span>
+                <span>36 Chapter & Subject Tests</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+              </div>
+            </Link>
+
+            {/* Full Mock Tests */}
+            <Link 
+              href="/full-mocks"
+              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 12.408 9-9m-9 0 9 9" />
+                  </svg>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-text-primary-custom">Full Mock Tests</h3>
+                  <p className="text-xs text-text-secondary-custom">
+                    Simulation Of a Real Mock Test [ 8+8 ]
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end gap-3 text-primary-custom font-semibold text-xs pt-3 sm:pt-0 border-t sm:border-t-0 border-[#334155]/20 mt-3 sm:mt-0 shrink-0">
+                <span>16 Full Length Mock Tests</span>
                 <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </div>
             </Link>
@@ -268,7 +236,12 @@ export default function HomePage() {
 
       </main>
 
-
+      {/* Footer */}
+      <footer className="border-t border-[#334155]/40 bg-surface-custom/35 mt-6">
+        <div className="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-text-secondary-custom/60">
+          &copy; {new Date().getFullYear()} NDA Mock Test Platform. All rights reserved. Designed for NDA aspirants.
+        </div>
+      </footer>
     </div>
   );
 }
