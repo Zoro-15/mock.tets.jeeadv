@@ -122,7 +122,7 @@ export default function HomePage() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="text-xs text-danger-custom hover:text-danger-custom/80 hover:bg-danger-custom/10 border border-transparent hover:border-danger-custom/30 px-3 py-1.5 rounded-full transition-all cursor-pointer font-bold outline-none"
+                  className="text-xs text-danger-custom hover:text-danger-custom/80 hover:bg-danger-custom/10 border border-transparent hover:border-danger-custom/30 px-3 py-1.5 rounded-full transition-all cursor-pointer font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger-custom"
                 >
                   Sign Out
                 </button>
@@ -162,7 +162,7 @@ export default function HomePage() {
             {/* Previous Year Papers */}
             <Link 
               href="/previous-year"
-              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">
@@ -186,7 +186,7 @@ export default function HomePage() {
             {/* Mathematics Super Pack */}
             <Link 
               href="/maths-pack"
-              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">
@@ -210,7 +210,7 @@ export default function HomePage() {
             {/* Full Mock Tests */}
             <Link 
               href="/full-mocks"
-              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+              className="group p-5 bg-surface-custom border border-[#334155]/40 rounded-xl hover:border-primary-custom/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-[1.01] flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-primary-custom/10 rounded-xl flex items-center justify-center text-primary-custom group-hover:bg-primary-custom group-hover:text-white transition-colors duration-300 shrink-0 mt-0.5">

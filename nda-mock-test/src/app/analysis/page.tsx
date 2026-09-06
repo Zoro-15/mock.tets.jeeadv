@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import { Attempt, Test, Question, LeaderboardEntry } from '../../lib/types';
 import { getAttempt, getTestById, getQuestionsForTest, getLeaderboardForTest } from '../../lib/db';
-import { generateSubjectAnalytics } from '../../lib/analytics';
+import { generateSubjectAnalytics, generatePacingAnalytics, calculateNdaQualification } from '../../lib/analytics';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import EmptyState from '../../components/EmptyState';
@@ -111,6 +111,9 @@ function AnalysisContent() {
     ? generateSubjectAnalytics(questions, attempt.responses)
     : [];
 
+  const ndaStatus = test && attempt ? calculateNdaQualification(attempt.score, test.marks) : null;
+  const pacingInsights = questions.length && attempt ? generatePacingAnalytics(questions, attempt.responses) : null;
+
   // Solution items based on filters
   const filteredQuestions = questions.map((q, idx) => ({ q, idx: idx + 1 })).filter(({ q }) => {
     const resp = attempt.responses[q.id];
@@ -133,7 +136,7 @@ function AnalysisContent() {
       <header className="border-b border-[#334155]/60 bg-surface-custom/85 sticky top-0 z-30 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 bg-background-custom/40 rounded-lg border border-[#334155]/60">
+            <Link href="/" aria-label="Back to dashboard" className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 bg-background-custom/40 rounded-lg border border-[#334155]/60 focus-visible:ring-2 focus-visible:ring-primary-custom outline-none">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
@@ -148,7 +151,7 @@ function AnalysisContent() {
             <ThemeToggle />
             <Link 
               href="/"
-              className="px-4 py-2 border border-[#334155]/60 text-xs sm:text-sm font-semibold rounded-xl text-text-secondary-custom hover:text-text-primary-custom hover:bg-surface-custom/40 transition-all cursor-pointer"
+              className="px-4 py-2 border border-[#334155]/60 text-xs sm:text-sm font-semibold rounded-xl text-text-secondary-custom hover:text-text-primary-custom hover:bg-surface-custom/40 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
             >
               Dashboard
             </Link>
@@ -160,14 +163,16 @@ function AnalysisContent() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         
         {/* Navigation Tabs */}
-        <div className="flex border-b border-[#334155]">
+        <div role="tablist" className="flex border-b border-[#334155]">
           {(['analysis', 'solutions', leaderboard && leaderboard.length > 0 ? 'leaderboard' : null].filter(Boolean) as ('analysis' | 'solutions' | 'leaderboard')[]).map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
                 key={tab}
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => handleTabChange(tab)}
-                className={`py-3 px-6 text-sm font-semibold capitalize transition-all relative cursor-pointer outline-none ${
+                className={`py-3 px-6 text-sm font-semibold capitalize transition-all relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-custom ${
                   isActive ? 'text-primary-custom' : 'text-text-secondary-custom hover:text-text-primary-custom'
                 }`}
               >
@@ -191,6 +196,60 @@ function AnalysisContent() {
             {/* 1. ANALYSIS TAB */}
             {activeTab === 'analysis' && (
               <div className="space-y-6 animate-fadeIn">
+            {/* Official NDA Qualifying Benchmark */}
+            {ndaStatus && (
+              <div className={`p-5 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm ${
+                ndaStatus.verdict === 'Qualified'
+                  ? 'bg-success-custom/10 border-success-custom/40 text-success-custom'
+                  : ndaStatus.verdict === 'Borderline'
+                  ? 'bg-warning-custom/10 border-warning-custom/40 text-warning-custom'
+                  : 'bg-danger-custom/10 border-danger-custom/40 text-danger-custom'
+              }`}>
+                <div className="flex items-start gap-3.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                    ndaStatus.verdict === 'Qualified' 
+                      ? 'bg-success-custom text-slate-950 shadow-md shadow-success-custom/20' 
+                      : ndaStatus.verdict === 'Borderline'
+                      ? 'bg-warning-custom text-slate-950 shadow-md shadow-warning-custom/20'
+                      : 'bg-danger-custom text-white shadow-md shadow-danger-custom/20'
+                  }`} aria-hidden="true">
+                    {ndaStatus.verdict === 'Qualified' ? '✓' : ndaStatus.verdict === 'Borderline' ? '▲' : '!'}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-sm sm:text-base text-text-primary-custom">
+                        UPSC NDA Qualifying Benchmark: {ndaStatus.verdict}
+                      </h4>
+                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-surface-custom border border-[#334155]/60 text-text-secondary-custom">
+                        {ndaStatus.percentageScore}% Score
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary-custom leading-relaxed max-w-2xl">
+                      {ndaStatus.verdictMessage}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-secondary-custom/80 font-mono pt-1">
+                      <span>Sectional Cutoff (25%): <strong>{ndaStatus.sectionalRequiredMarks}</strong> marks</span>
+                      <span>•</span>
+                      <span>Estimated Merit Benchmark: <strong>~{ndaStatus.estimatedCutoffMarks}</strong> marks</span>
+                      <span>•</span>
+                      <span>Your Score: <strong className="text-text-primary-custom">{attempt.score}</strong> / {test.marks}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="self-start md:self-center shrink-0">
+                  <span className={`text-xs font-mono font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-xl border ${
+                    ndaStatus.verdict === 'Qualified'
+                      ? 'border-success-custom/40 bg-success-custom/20 text-success-custom'
+                      : ndaStatus.verdict === 'Borderline'
+                      ? 'border-warning-custom/40 bg-warning-custom/20 text-warning-custom'
+                      : 'border-danger-custom/40 bg-danger-custom/20 text-danger-custom'
+                  }`}>
+                    {ndaStatus.verdict}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Summary cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatsCard
@@ -296,6 +355,85 @@ function AnalysisContent() {
                 </div>
               </div>
             </div>
+
+            {/* Speed vs. Accuracy Pacing Quadrant */}
+            {pacingInsights && (
+              <div className="bg-surface-custom border border-[#334155]/60 rounded-xl p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#334155]/40 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-text-primary-custom uppercase tracking-wider">
+                      Speed vs. Accuracy Pacing Quadrant
+                    </h3>
+                    <p className="text-xs text-text-secondary-custom/70">
+                      Identify careless errors, mastered topics, and dangerous time traps
+                    </p>
+                  </div>
+                  {pacingInsights.wastedTimeSeconds > 0 && (
+                    <div className="text-xs font-mono bg-danger-custom/10 border border-danger-custom/30 text-danger-custom px-3 py-1 rounded-lg">
+                      Time Lost on Wrong Qs: <strong>{formatTimeTaken(pacingInsights.wastedTimeSeconds)}</strong>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Quadrant 1: Ideal Pace */}
+                  <div className="bg-background-custom/60 border border-success-custom/30 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-success-custom">⚡ Ideal Pace</span>
+                      <span className="font-mono text-xs text-text-secondary-custom/60">avg {pacingInsights.idealPace.avgTime}s</span>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-text-primary-custom">
+                      {pacingInsights.idealPace.count} <span className="text-xs font-normal text-text-secondary-custom">Questions</span>
+                    </div>
+                    <p className="text-[11px] text-text-secondary-custom leading-tight">
+                      Correct & answered swiftly (&le;90s). High conceptual mastery.
+                    </p>
+                  </div>
+
+                  {/* Quadrant 2: Slow & Steady */}
+                  <div className="bg-background-custom/60 border border-primary-custom/30 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-primary-custom">⏱️ Slow & Steady</span>
+                      <span className="font-mono text-xs text-text-secondary-custom/60">avg {pacingInsights.slowAndSteady.avgTime}s</span>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-text-primary-custom">
+                      {pacingInsights.slowAndSteady.count} <span className="text-xs font-normal text-text-secondary-custom">Questions</span>
+                    </div>
+                    <p className="text-[11px] text-text-secondary-custom leading-tight">
+                      Correct but took &gt;90s. Concept known, but speed drills needed.
+                    </p>
+                  </div>
+
+                  {/* Quadrant 3: Rushed Guess */}
+                  <div className="bg-background-custom/60 border border-warning-custom/30 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-warning-custom">⚠️ Rushed Guess</span>
+                      <span className="font-mono text-xs text-text-secondary-custom/60">avg {pacingInsights.rushedGuess.avgTime}s</span>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-text-primary-custom">
+                      {pacingInsights.rushedGuess.count} <span className="text-xs font-normal text-text-secondary-custom">Questions</span>
+                    </div>
+                    <p className="text-[11px] text-text-secondary-custom leading-tight">
+                      Incorrect in &lt;20s. Impulsive attempts or blind guesses costing negative marks.
+                    </p>
+                  </div>
+
+                  {/* Quadrant 4: Time Trap */}
+                  <div className="bg-background-custom/60 border border-danger-custom/30 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-danger-custom">🛑 Time Trap</span>
+                      <span className="font-mono text-xs text-text-secondary-custom/60">avg {pacingInsights.timeTrap.avgTime}s</span>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-text-primary-custom">
+                      {pacingInsights.timeTrap.count} <span className="text-xs font-normal text-text-secondary-custom">Questions</span>
+                    </div>
+                    <p className="text-[11px] text-text-secondary-custom leading-tight">
+                      Incorrect & spent &gt;120s. Dangerous traps — cultivate skipping discipline.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* TOPIC INSIGHTS */}
             <div className="bg-surface-custom border border-[#334155]/60 rounded-xl p-6 space-y-5">

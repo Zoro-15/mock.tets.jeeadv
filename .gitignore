@@ -68,3 +68,6 @@ package-lock.json
 scratch/
 inspect_*.ts
 *.txt
+*.html
+v3nt*
+

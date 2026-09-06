@@ -66,3 +66,7 @@ package-lock.json
 *-migrate.js
 *-revert.js
 scratch/
+inspect_*.ts
+*.txt
+v3nt*.html
+*.html

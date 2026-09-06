@@ -32,9 +32,26 @@ function ActiveTestContent() {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Time spent per question tracker - stored in mutable ref to avoid continuous state re-triggering
   const timeSpentRef = useRef<Record<string, number>>({});
+
+  // Fullscreen state listener
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   // Fetch initial details
   useEffect(() => {
@@ -156,6 +173,26 @@ function ActiveTestContent() {
   useEffect(() => {
     timerStateRef.current = { responses, currentIndex, activeQuestion, saveProgress };
   }, [responses, currentIndex, activeQuestion, saveProgress]);
+
+  // Resilient beforeunload auto-save to guarantee zero progress loss on close/refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!attemptId) return;
+      const state = timerStateRef.current;
+      const responsesToSave = { ...state.responses };
+      if (state.activeQuestion) {
+        const qId = state.activeQuestion.id;
+        responsesToSave[qId] = {
+          ...responsesToSave[qId],
+          timeSpent: timeSpentRef.current[qId] || 0
+        };
+      }
+      state.saveProgress(responsesToSave, timeLeftRef.current, state.currentIndex);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [attemptId]);
 
   // Clock tick callback handled by Timer component
   const handleTick = useCallback((newTime: number) => {
@@ -319,6 +356,16 @@ function ActiveTestContent() {
   // Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // If modal or drawer is open, handle Escape and prevent background question mutations
+      if (submitDialogOpen || paletteOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          if (submitDialogOpen) setSubmitDialogOpen(false);
+          if (paletteOpen) setPaletteOpen(false);
+        }
+        return;
+      }
+
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
@@ -350,7 +397,7 @@ function ActiveTestContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext]);
+  }, [currentIndex, questions, responses, activeQuestion, selectOption, handleSaveAndNext, handleMarkAndNext, submitDialogOpen, paletteOpen]);
 
   if (loading) {
     return (
@@ -365,7 +412,7 @@ function ActiveTestContent() {
       <div className="min-h-screen bg-background-custom flex items-center justify-center p-4">
         <div className="max-w-md text-center">
           <EmptyState title="Attempt Session Error" message="We could not load this test session. It may have expired or been submitted." />
-          <Link href="/" className="mt-4 inline-block px-5 py-2.5 bg-primary-custom text-white rounded-xl text-sm font-semibold">
+          <Link href="/" className="mt-4 inline-block px-5 py-2.5 bg-primary-custom text-white rounded-xl text-sm font-semibold focus-visible:ring-2 focus-visible:ring-primary-custom outline-none">
             Go back Home
           </Link>
         </div>
@@ -387,13 +434,22 @@ function ActiveTestContent() {
       {/* Top Navbar */}
       <header className="border-b border-[#334155]/60 bg-surface-custom/95 backdrop-blur-md sticky top-0 z-40 shadow-md w-full">
         {/* Progress Bar */}
-        <div className="absolute top-0 left-0 h-1 bg-primary-custom transition-all duration-500 rounded-r-full" style={{ width: `${(attemptedCount / questions.length) * 100}%` }} />
+        <div 
+          role="progressbar"
+          aria-valuenow={attemptedCount}
+          aria-valuemin={0}
+          aria-valuemax={questions.length}
+          aria-label="Test completion progress"
+          className="absolute top-0 left-0 h-1 bg-primary-custom transition-all duration-500 rounded-r-full" 
+          style={{ width: `${(attemptedCount / questions.length) * 100}%` }} 
+        />
         
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 min-w-0 max-w-[50%] sm:max-w-[65%]">
             <button 
               onClick={handlePause}
-              className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 hover:bg-background-custom/40 rounded-lg cursor-pointer transition-colors shrink-0"
+              aria-label="Pause test and return to dashboard"
+              className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 hover:bg-background-custom/40 rounded-lg cursor-pointer transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
               title="Pause test"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -406,6 +462,47 @@ function ActiveTestContent() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Font Zoom Controls */}
+            <div className="hidden sm:flex items-center gap-0.5 bg-surface-custom/60 border border-[#334155]/60 rounded-lg p-0.5 text-xs font-bold text-text-secondary-custom">
+              <button
+                onClick={() => setFontSize(f => f === 'lg' ? 'base' : 'sm')}
+                disabled={fontSize === 'sm'}
+                aria-label="Decrease question text size"
+                title="Decrease font size"
+                className="px-2 py-1 hover:text-text-primary-custom hover:bg-surface-custom rounded disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                A-
+              </button>
+              <span className="w-px h-3 bg-[#334155]" />
+              <button
+                onClick={() => setFontSize(f => f === 'sm' ? 'base' : 'lg')}
+                disabled={fontSize === 'lg'}
+                aria-label="Increase question text size"
+                title="Increase font size"
+                className="px-2 py-1 hover:text-text-primary-custom hover:bg-surface-custom rounded disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                A+
+              </button>
+            </div>
+
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              aria-label="Toggle fullscreen exam mode"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen CBT Mode"}
+              className="p-1.5 text-text-secondary-custom hover:text-text-primary-custom bg-surface-custom/50 rounded-lg border border-[#334155]/60 cursor-pointer hidden sm:flex items-center justify-center transition-colors"
+            >
+              {isFullscreen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              )}
+            </button>
+
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -415,7 +512,8 @@ function ActiveTestContent() {
             {/* Palette toggle button */}
             <button
               onClick={() => setPaletteOpen(!paletteOpen)}
-              className="p-2 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-lg cursor-pointer md:hidden shadow-sm transition-colors"
+              aria-label="Open question palette drawer"
+              className="p-2 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-lg cursor-pointer md:hidden shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
               title="Open palette"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -450,6 +548,7 @@ function ActiveTestContent() {
                 timeSpent={timeSpentRef.current[activeQuestion.id] || 0}
                 positiveMarks={positiveMarks}
                 negativeMarks={test.negativeMarking}
+                fontSize={fontSize}
               />
 
               {/* Answer options */}
@@ -478,7 +577,7 @@ function ActiveTestContent() {
               <button
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className={`px-5 py-2.5 border border-[#334155]/60 text-text-primary-custom rounded-xl font-bold text-sm tracking-wide transition-all outline-none text-center ${
+                className={`px-5 py-2.5 border border-[#334155]/60 text-text-primary-custom rounded-xl font-bold text-sm tracking-wide transition-all outline-none text-center focus-visible:ring-2 focus-visible:ring-primary-custom ${
                   currentIndex === 0 
                     ? 'opacity-40 cursor-not-allowed bg-surface-custom/20' 
                     : 'hover:bg-surface-custom/60 active:scale-95 cursor-pointer'
@@ -488,7 +587,7 @@ function ActiveTestContent() {
               </button>
               <button
                 onClick={handleMarkAndNext}
-                className="px-5 py-2.5 bg-warning-custom/10 hover:bg-warning-custom/20 active:scale-95 border border-warning-custom/50 text-warning-custom rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer outline-none text-center"
+                className="px-5 py-2.5 bg-warning-custom/10 hover:bg-warning-custom/20 active:scale-95 border border-warning-custom/50 text-warning-custom rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer outline-none text-center focus-visible:ring-2 focus-visible:ring-warning-custom"
               >
                 MARKS & NEXT
               </button>
@@ -496,7 +595,7 @@ function ActiveTestContent() {
             
             <button
               onClick={handleSaveAndNext}
-              className="px-6 py-2.5 bg-primary-custom hover:bg-[#2563EB] active:scale-95 text-white rounded-xl font-bold text-sm tracking-wide transition-all shadow-md shadow-primary-custom/20 hover:shadow-primary-custom/40 cursor-pointer outline-none text-center"
+              className="px-6 py-2.5 bg-primary-custom hover:bg-[#2563EB] active:scale-95 text-white rounded-xl font-bold text-sm tracking-wide transition-all shadow-md shadow-primary-custom/20 hover:shadow-primary-custom/40 cursor-pointer outline-none text-center focus-visible:ring-2 focus-visible:ring-primary-custom"
             >
               NEXT
             </button>
@@ -517,14 +616,14 @@ function ActiveTestContent() {
         </div>
       </div>
 
-      {/* Mobile / Android Fixed Bottom Action Bar (fixed single-line layout) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-custom/95 backdrop-blur-md border-t border-[#334155]/60 px-2 py-2 shadow-2xl">
+      {/* Mobile / Android Fixed Bottom Action Bar (fixed single-line layout with safe-area inset) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-custom/95 backdrop-blur-md border-t border-[#334155]/60 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl">
         <div className="flex flex-row items-center justify-between gap-1.5 w-full">
           {/* PREVIOUS button */}
           <button
             onClick={handlePrevious}
             disabled={currentIndex === 0}
-            className={`flex-1 px-2 py-2.5 border border-[#334155]/60 text-text-primary-custom rounded-xl font-bold text-[11px] tracking-wide transition-all outline-none text-center truncate ${
+            className={`flex-1 px-2 py-2.5 border border-[#334155]/60 text-text-primary-custom rounded-xl font-bold text-[11px] tracking-wide transition-all outline-none text-center truncate focus-visible:ring-2 focus-visible:ring-primary-custom ${
               currentIndex === 0 
                 ? 'opacity-40 cursor-not-allowed bg-surface-custom/20' 
                 : 'hover:bg-surface-custom/60 active:scale-95 cursor-pointer'
@@ -536,7 +635,7 @@ function ActiveTestContent() {
           {/* MARKS & NEXT button */}
           <button
             onClick={handleMarkAndNext}
-            className="flex-1 px-2 py-2.5 bg-warning-custom/10 hover:bg-warning-custom/20 active:scale-95 border border-warning-custom/50 text-warning-custom rounded-xl font-bold text-[11px] tracking-wide transition-all cursor-pointer outline-none text-center truncate"
+            className="flex-1 px-2 py-2.5 bg-warning-custom/10 hover:bg-warning-custom/20 active:scale-95 border border-warning-custom/50 text-warning-custom rounded-xl font-bold text-[11px] tracking-wide transition-all cursor-pointer outline-none text-center truncate focus-visible:ring-2 focus-visible:ring-warning-custom"
           >
             MARKS & NEXT
           </button>
@@ -544,7 +643,7 @@ function ActiveTestContent() {
           {/* NEXT button */}
           <button
             onClick={handleSaveAndNext}
-            className="flex-1 px-2 py-2.5 bg-primary-custom hover:bg-[#2563EB] active:scale-95 text-white rounded-xl font-bold text-[11px] tracking-wide transition-all shadow-md shadow-primary-custom/20 hover:shadow-primary-custom/40 cursor-pointer outline-none text-center truncate"
+            className="flex-1 px-2 py-2.5 bg-primary-custom hover:bg-[#2563EB] active:scale-95 text-white rounded-xl font-bold text-[11px] tracking-wide transition-all shadow-md shadow-primary-custom/20 hover:shadow-primary-custom/40 cursor-pointer outline-none text-center truncate focus-visible:ring-2 focus-visible:ring-primary-custom"
           >
             NEXT
           </button>

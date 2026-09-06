@@ -75,13 +75,15 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
         </div>
 
         {/* Tab Controls */}
-        <div className="flex bg-background-custom p-1 rounded-xl border border-[#334155]/40 select-none">
+        <div role="tablist" className="flex bg-background-custom p-1 rounded-xl border border-[#334155]/40 select-none">
           <button
+            role="tab"
+            aria-selected={activeTab === 'register'}
             onClick={() => {
               setActiveTab('register');
               setError(null);
             }}
-            className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-colors outline-none cursor-pointer ${
+            className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-colors outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom ${
               activeTab === 'register' 
                 ? 'bg-primary-custom text-white shadow-sm' 
                 : 'text-text-secondary-custom hover:text-text-primary-custom'
@@ -90,11 +92,13 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
             Register Cadet
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'login'}
             onClick={() => {
               setActiveTab('login');
               setError(null);
             }}
-            className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-colors outline-none cursor-pointer ${
+            className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-colors outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom ${
               activeTab === 'login' 
                 ? 'bg-primary-custom text-white shadow-sm' 
                 : 'text-text-secondary-custom hover:text-text-primary-custom'
@@ -108,7 +112,7 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
         <form onSubmit={handleSubmit} className="space-y-4">
           
           {error && (
-            <div className="p-3 bg-danger-custom/10 border border-danger-custom/20 rounded-xl text-xs text-danger-custom font-semibold text-center leading-relaxed">
+            <div role="alert" className="p-3 bg-danger-custom/10 border border-danger-custom/20 rounded-xl text-xs text-danger-custom font-semibold text-center leading-relaxed">
               {error}
             </div>
           )}
@@ -116,44 +120,57 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
           {activeTab === 'register' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
+                <label htmlFor="cadet-name" className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
                   Full Name
                 </label>
                 <input
+                  id="cadet-name"
+                  name="name"
                   type="text"
+                  autoComplete="name"
+                  spellCheck={false}
                   placeholder="Enter your name (e.g. Karan Johar)"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-sm focus:outline-none focus:border-primary-custom transition-colors"
+                  className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-sm focus:outline-none focus:border-primary-custom focus-visible:ring-2 focus-visible:ring-primary-custom transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
+                <label htmlFor="cadet-number" className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
                   Cadet Number / Roll ID
                 </label>
                 <input
+                  id="cadet-number"
+                  name="cadetNumber"
                   type="text"
+                  autoComplete="off"
+                  spellCheck={false}
                   placeholder="Enter Cadet Code (e.g. C-1095)"
                   value={cadetNumber}
                   onChange={(e) => setCadetNumber(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-sm focus:outline-none focus:border-primary-custom transition-colors"
+                  className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-sm focus:outline-none focus:border-primary-custom focus-visible:ring-2 focus-visible:ring-primary-custom transition-colors"
                 />
               </div>
             </>
           )}
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
+            <label htmlFor="cadet-pin" className="text-[10px] font-bold text-text-secondary-custom uppercase tracking-wider block">
               4-Digit PIN Code
             </label>
             <input
+              id="cadet-pin"
+              name="pin"
               type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
               maxLength={4}
               placeholder="••••"
               value={studentCode}
               onChange={(e) => setStudentCode(e.target.value.replace(/\D/g, ''))}
-              className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-center tracking-widest font-mono text-base focus:outline-none focus:border-primary-custom transition-colors"
+              className="w-full px-4 py-2.5 bg-background-custom border border-[#334155]/60 rounded-xl text-text-primary-custom placeholder-text-secondary-custom/30 text-center tracking-widest font-mono text-base focus:outline-none focus:border-primary-custom focus-visible:ring-2 focus-visible:ring-primary-custom transition-colors"
             />
             <span className="text-[10px] text-text-secondary-custom/40 block text-right mt-1 font-medium">
               Numeric PIN code to verify session.
@@ -163,10 +180,10 @@ export default function RegistrationModal({ onSuccess }: RegistrationModalProps)
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-xl text-sm font-bold tracking-wide shadow-md shadow-primary-custom/10 transition-colors cursor-pointer outline-none flex items-center justify-center"
+            className="w-full py-3 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-xl text-sm font-bold tracking-wide shadow-md shadow-primary-custom/10 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-custom flex items-center justify-center"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" aria-label="Loading" />
             ) : activeTab === 'register' ? (
               'REGISTER & ENTER'
             ) : (

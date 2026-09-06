@@ -65,14 +65,14 @@ export default function TestCard({ test, status, attemptId }: TestCardProps) {
         {status === 'completed' && (
           <Link
             href={`/test/instructions?id=${test.id}`}
-            className="px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-center w-full md:w-auto shadow-sm cursor-pointer bg-primary-custom hover:bg-primary-custom/90 text-white"
+            className="px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-center w-full md:w-auto shadow-sm cursor-pointer bg-primary-custom hover:bg-primary-custom/90 text-white focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
           >
             Reattempt Test
           </Link>
         )}
         <Link 
           href={buttonLink} 
-          className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-center w-full md:w-auto shadow-sm cursor-pointer ${buttonClass}`}
+          className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-center w-full md:w-auto shadow-sm cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none ${buttonClass}`}
         >
           {buttonLabel}
         </Link>

@@ -20,7 +20,7 @@ export default React.memo(function OptionCard({
   onClick, 
   disabled = false 
 }: OptionCardProps) {
-  let baseClass = "w-full p-3.5 sm:p-4 border rounded-xl flex items-center gap-3.5 sm:gap-4 text-left transition-all duration-150 ease-out outline-none text-base cursor-pointer active:scale-[0.99] touch-manipulation";
+  let baseClass = "w-full p-3.5 sm:p-4 border rounded-xl flex items-center gap-3.5 sm:gap-4 text-left transition-all duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-primary-custom text-base cursor-pointer active:scale-[0.99] touch-manipulation";
   let borderClass = "border-[#334155]/60 bg-surface-custom/40 hover:bg-surface-custom/70 hover:border-primary-custom/30 text-text-secondary-custom";
   let labelBgClass = "bg-background-custom text-text-secondary-custom border border-[#334155]/60";
 

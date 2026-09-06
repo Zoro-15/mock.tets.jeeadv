@@ -37,8 +37,11 @@ export default function ContinueLearningCard({ unfinishedAttempt, test }: Contin
         <div className="flex items-center gap-2">
           <span className="text-xs text-text-secondary-custom">Daily Motivation</span>
           <button 
+            role="switch"
+            aria-checked={showQuote}
+            aria-label="Toggle daily motivation quote"
             onClick={() => setShowQuote(!showQuote)}
-            className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer duration-200 outline-none ${
+            className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-custom ${
               showQuote ? 'bg-primary-custom' : 'bg-[#334155]'
             }`}
           >
@@ -48,6 +51,35 @@ export default function ContinueLearningCard({ unfinishedAttempt, test }: Contin
           </button>
         </div>
       </div>
+
+      {/* Motivation Quote Display */}
+      {showQuote && quote && (
+        <div className="p-4 bg-surface-custom/90 border border-primary-custom/30 rounded-xl relative flex items-start justify-between gap-3 animate-fadeIn shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-xl leading-none select-none text-primary-custom shrink-0 mt-0.5" aria-hidden="true">
+              ❝
+            </span>
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm italic text-text-primary-custom leading-relaxed font-medium">
+                “{quote}”
+              </p>
+              <span className="text-[10px] text-primary-custom font-bold uppercase tracking-wider block">
+                NDA Officer Mindset
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={refreshQuote}
+            aria-label="Refresh daily motivation quote"
+            title="Refresh quote"
+            className="p-1 text-text-secondary-custom/60 hover:text-primary-custom transition-colors rounded-lg cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div>
         {/* Continue Learning card */}
@@ -77,7 +109,7 @@ export default function ContinueLearningCard({ unfinishedAttempt, test }: Contin
 
             <Link 
               href={`/test?attemptId=${unfinishedAttempt.id}`}
-              className="w-full sm:w-auto text-center bg-warning-custom hover:bg-warning-custom/90 text-background-custom px-6 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm cursor-pointer block whitespace-nowrap"
+              className="w-full sm:w-auto text-center bg-warning-custom hover:bg-warning-custom/90 text-background-custom px-6 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm cursor-pointer block whitespace-nowrap focus-visible:ring-2 focus-visible:ring-warning-custom outline-none"
             >
               Resume Test
             </Link>

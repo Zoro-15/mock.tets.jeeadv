@@ -585,102 +585,139 @@ export function generateQuestionsForTest(testId: string): Question[] {
         });
       }
     } else {
-      // Math
-      const upperLimit = testNumber;
-      const coeff = testNumber * num;
+      // Math Fallback Generator (Mathematically consistent templates)
+      const upperLimit = Math.max(1, testNumber % 10);
+      const coeff = Math.max(1, (testNumber * num) % 15);
       
       const mathTemplates = [
         {
-          text: `Evaluate the integral:\n\n$$\\int_{0}^{${upperLimit}} ${coeff}x^2 \\, dx$$`,
-          ops: [`$${coeff}$`, `$${coeff * 2}$`, `$${coeff * 3}$`, `$${coeff * 4}$`]
-        },
-        {
-          text: `Find the determinant of the matrix $A$:\n\n$$A = \\begin{pmatrix} ${coeff} & 2 \\\\ 1 & ${upperLimit} \\end{pmatrix}$$`,
-          ops: [`$${(coeff * upperLimit) - 2}$`, `$${coeff * upperLimit}$`, `$${coeff + upperLimit}$`, `$${coeff - upperLimit}$`]
+          text: `Find the determinant of the $2 \\times 2$ matrix $A$:\n\n$$A = \\begin{pmatrix} ${coeff} & 2 \\\\ 1 & ${upperLimit} \\end{pmatrix}$$`,
+          ans: `$${(coeff * upperLimit) - 2}$`,
+          d1: `$${(coeff * upperLimit) + 2}$`,
+          d2: `$${coeff * upperLimit}$`,
+          d3: `$${coeff - upperLimit}$`,
+          explanation: `For matrix $A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$, $\\det(A) = ad - bc$. Here, $\\det(A) = (${coeff} \\times ${upperLimit}) - (2 \\times 1) = ${(coeff * upperLimit) - 2}$.`
         },
         {
           text: `Evaluate the limit:\n\n$$\\lim_{x \\to 0} \\frac{\\sin(${coeff}x)}{${upperLimit}x}$$`,
-          ops: [`$\\frac{${coeff}}{${upperLimit}}$`, `$${coeff}$`, `$${upperLimit}$`, `$0$`]
+          ans: `$\\frac{${coeff}}{${upperLimit}}$`,
+          d1: `$\\frac{${upperLimit}}{${coeff}}$`,
+          d2: `$1$`,
+          d3: `$0$`,
+          explanation: `Using the fundamental trigonometric limit $\\lim_{y \\to 0} \\frac{\\sin y}{y} = 1$, we rewrite as $\\frac{${coeff}}{${upperLimit}} \\lim_{x \\to 0} \\frac{\\sin(${coeff}x)}{${coeff}x} = \\frac{${coeff}}{${upperLimit}} \\times 1 = \\frac{${coeff}}{${upperLimit}}$.`
         },
         {
           text: `Find the derivative of $f(x) = ${coeff}x^{${upperLimit}}$ with respect to $x$, evaluated at $x = 1$.`,
-          ops: [`$${coeff * upperLimit}$`, `$${coeff}$`, `$${upperLimit}$`, `$${coeff + upperLimit}$`]
+          ans: `$${coeff * upperLimit}$`,
+          d1: `$${coeff}$`,
+          d2: `$${upperLimit}$`,
+          d3: `$${coeff + upperLimit}$`,
+          explanation: `Applying the power rule, $f'(x) = ${coeff} \\cdot ${upperLimit} x^{${upperLimit} - 1}$. At $x = 1$, $f'(1) = ${coeff * upperLimit}(1) = ${coeff * upperLimit}$.`
         },
         {
           text: `Given vector $\\vec{a} = ${coeff}\\hat{i} + ${upperLimit}\\hat{j}$, find the square of its magnitude $|\\vec{a}|^2$.`,
-          ops: [`$${(coeff*coeff) + (upperLimit*upperLimit)}$`, `$${coeff + upperLimit}$`, `$${coeff * upperLimit}$`, `$${(coeff*coeff) - (upperLimit*upperLimit)}$`]
+          ans: `$${(coeff * coeff) + (upperLimit * upperLimit)}$`,
+          d1: `$${coeff + upperLimit}$`,
+          d2: `$${coeff * upperLimit}$`,
+          d3: `$${Math.abs((coeff * coeff) - (upperLimit * upperLimit))}$`,
+          explanation: `The magnitude squared of vector $\\vec{a} = x\\hat{i} + y\\hat{j}$ is $|\vec{a}|^2 = x^2 + y^2 = ${coeff}^2 + ${upperLimit}^2 = ${(coeff * coeff) + (upperLimit * upperLimit)}$.`
         },
         {
           text: `Find the modulus of the complex number $z = ${coeff} + ${upperLimit}i$.`,
-          ops: [`$\\sqrt{${(coeff*coeff) + (upperLimit*upperLimit)}}$`, `$${coeff + upperLimit}$`, `$${(coeff*coeff) + (upperLimit*upperLimit)}$`, `$${coeff}$`]
+          ans: `$\\sqrt{${(coeff * coeff) + (upperLimit * upperLimit)}}$`,
+          d1: `$${coeff + upperLimit}$`,
+          d2: `$${(coeff * coeff) + (upperLimit * upperLimit)}$`,
+          d3: `$${coeff}$`,
+          explanation: `The modulus of complex number $z = a + bi$ is $|z| = \\sqrt{a^2 + b^2} = \\sqrt{${coeff}^2 + ${upperLimit}^2} = \\sqrt{${(coeff * coeff) + (upperLimit * upperLimit)}}$.`
         },
         {
           text: `If the $n^{th}$ term of an Arithmetic Progression is $T_n = ${coeff}n + ${upperLimit}$, find the first term $T_1$.`,
-          ops: [`$${coeff + upperLimit}$`, `$${coeff}$`, `$${upperLimit}$`, `$${coeff * upperLimit}$`]
+          ans: `$${coeff + upperLimit}$`,
+          d1: `$${coeff}$`,
+          d2: `$${upperLimit}$`,
+          d3: `$${coeff * upperLimit}$`,
+          explanation: `Substitute $n = 1$ into $T_n$: $T_1 = ${coeff}(1) + ${upperLimit} = ${coeff + upperLimit}$.`
         },
         {
           text: `Find the discriminant of the quadratic equation $x^2 + ${coeff}x + ${upperLimit} = 0$.`,
-          ops: [`$${coeff * coeff - 4 * upperLimit}$`, `$${coeff * coeff + 4 * upperLimit}$`, `$${coeff * coeff - upperLimit}$`, `$${coeff - 4 * upperLimit}$`]
+          ans: `$${(coeff * coeff) - 4 * upperLimit}$`,
+          d1: `$${(coeff * coeff) + 4 * upperLimit}$`,
+          d2: `$${(coeff * coeff) - upperLimit}$`,
+          d3: `$${2 * coeff - 4 * upperLimit}$`,
+          explanation: `The discriminant formula is $D = b^2 - 4ac$. Here $a=1, b=${coeff}, c=${upperLimit}$. Thus $D = (${coeff})^2 - 4(1)(${upperLimit}) = ${(coeff * coeff) - 4 * upperLimit}$.`
         },
         {
           text: `Simplify the trigonometric expression: $\\cos^2(${coeff}x) + \\sin^2(${coeff}x) + ${upperLimit}$.`,
-          ops: [`$${1 + upperLimit}$`, `$${upperLimit}$`, `$${coeff + upperLimit}$`, `$${coeff}$`]
+          ans: `$${1 + upperLimit}$`,
+          d1: `$${upperLimit}$`,
+          d2: `$${coeff + upperLimit}$`,
+          d3: `$${coeff}$`,
+          explanation: `By the Pythagorean identity $\\cos^2(\\theta) + \\sin^2(\\theta) = 1$ for any real $\\theta$. Hence $1 + ${upperLimit} = ${1 + upperLimit}$.`
         },
         {
-          text: `Find the sum of the first ${upperLimit} natural numbers multiplied by ${coeff}.`,
-          ops: [`$${coeff * (upperLimit * (upperLimit + 1)) / 2}$`, `$${coeff * upperLimit}$`, `$${(upperLimit * (upperLimit + 1)) / 2}$`, `$${coeff + upperLimit}$`]
-        },
-        {
-          text: `Find the maximum value of $f(x) = -x^2 + ${coeff}x - ${upperLimit}$.`,
-          ops: [`$\\frac{${coeff * coeff - 4 * upperLimit}}{4}$`, `$${coeff}$`, `$${upperLimit}$`, `$0$`]
-        },
-        {
-          text: `A line passes through $(0, ${coeff})$ and $( ${upperLimit}, 0)$. Find its slope.`,
-          ops: [`$-\\frac{${coeff}}{${upperLimit}}$`, `$\\frac{${coeff}}{${upperLimit}}$`, `$${coeff}$`, `$-${upperLimit}$`]
-        },
-        {
-          text: `Find the area of a rectangle with length ${coeff} and width ${upperLimit}.`,
-          ops: [`$${coeff * upperLimit}$`, `$${2 * (coeff + upperLimit)}$`, `$${coeff + upperLimit}$`, `$${coeff / upperLimit}$`]
+          text: `A line passes through $(0, ${coeff})$ and $(${upperLimit}, 0)$. Find its slope.`,
+          ans: `$-\\frac{${coeff}}{${upperLimit}}$`,
+          d1: `$\\frac{${coeff}}{${upperLimit}}$`,
+          d2: `$-\\frac{${upperLimit}}{${coeff}}$`,
+          d3: `$\\frac{${upperLimit}}{${coeff}}$`,
+          explanation: `Slope $m = \\frac{y_2 - y_1}{x_2 - x_1} = \\frac{0 - ${coeff}}{${upperLimit} - 0} = -\\frac{${coeff}}{${upperLimit}}$.`
         },
         {
           text: `If $A$ and $B$ are independent events with $P(A) = \\frac{1}{${upperLimit + 1}}$ and $P(B) = \\frac{1}{${coeff + 1}}$, find $P(A \\cap B)$.`,
-          ops: [`$\\frac{1}{${(upperLimit + 1) * (coeff + 1)}}$`, `$\\frac{1}{${upperLimit + coeff + 2}}$`, `$\\frac{${upperLimit + 1}}{${coeff + 1}}$`, `$1$`]
-        },
-        {
-          text: `Find the value of $k$ if the vectors $k\\hat{i} + ${coeff}\\hat{j}$ and $${upperLimit}\\hat{i} - \\hat{j}$ are perpendicular.`,
-          ops: [`$\\frac{${coeff}}{${upperLimit}}$`, `$${coeff * upperLimit}$`, `$-\\frac{${coeff}}{${upperLimit}}$`, `$${coeff}$`]
+          ans: `$\\frac{1}{${(upperLimit + 1) * (coeff + 1)}}$`,
+          d1: `$\\frac{1}{${upperLimit + coeff + 2}}$`,
+          d2: `$\\frac{${upperLimit + 1}}{${coeff + 1}}$`,
+          d3: `$1$`,
+          explanation: `For independent events $A$ and $B$, $P(A \\cap B) = P(A) \\times P(B) = \\frac{1}{${upperLimit + 1}} \\times \\frac{1}{${coeff + 1}} = \\frac{1}{${(upperLimit + 1) * (coeff + 1)}}$.`
         },
         {
           text: `Evaluate $\\log_{${upperLimit + 1}} (${upperLimit + 1}^{${coeff}})$.`,
-          ops: [`$${coeff}$`, `$${upperLimit + 1}$`, `$${coeff * (upperLimit + 1)}$`, `$0$`]
+          ans: `$${coeff}$`,
+          d1: `$${upperLimit + 1}$`,
+          d2: `$${coeff * (upperLimit + 1)}$`,
+          d3: `$0$`,
+          explanation: `By logarithmic identity $\\log_b(b^k) = k$. Therefore, $\\log_{${upperLimit + 1}} (${upperLimit + 1}^{${coeff}}) = ${coeff}$.`
         },
         {
-          text: `Find the distance between the origin and the point $(${coeff}, ${upperLimit})$.`,
-          ops: [`$\\sqrt{${coeff*coeff + upperLimit*upperLimit}}$`, `$${coeff + upperLimit}$`, `$${coeff*coeff + upperLimit*upperLimit}$`, `$${coeff}$`]
+          text: `Find the distance between the origin $(0, 0)$ and the point $(${coeff}, ${upperLimit})$.`,
+          ans: `$\\sqrt{${(coeff * coeff) + (upperLimit * upperLimit)}}$`,
+          d1: `$${coeff + upperLimit}$`,
+          d2: `$${coeff * upperLimit}$`,
+          d3: `$${Math.abs(coeff - upperLimit)}$`,
+          explanation: `Distance formula from origin is $d = \\sqrt{x^2 + y^2} = \\sqrt{${coeff}^2 + ${upperLimit}^2} = \\sqrt{${(coeff * coeff) + (upperLimit * upperLimit)}}$.`
         },
         {
-          text: `Calculate the factorial expression: $\\frac{${upperLimit + 2}!}{${upperLimit}!}$.`,
-          ops: [`$${(upperLimit + 2) * (upperLimit + 1)}$`, `$${upperLimit + 2}$`, `$${upperLimit + 1}$`, `$0$`]
+          text: `Find the radius of the circle given by equation $x^2 + y^2 = ${coeff * coeff}$.`,
+          ans: `$${coeff}$`,
+          d1: `$${coeff * coeff}$`,
+          d2: `$${2 * coeff}$`,
+          d3: `$\\frac{${coeff}}{2}$`,
+          explanation: `The standard equation of a circle centered at origin is $x^2 + y^2 = r^2$. Here $r^2 = ${coeff * coeff}$, which gives radius $r = ${coeff}$.`
         },
         {
-          text: `Find the radius of the circle given by $x^2 + y^2 = ${coeff * coeff}$.`,
-          ops: [`$${coeff}$`, `$${coeff * coeff}$`, `$${2 * coeff}$`, `$${coeff / 2}$`]
-        },
-        {
-          text: `What is the dot product of $\\vec{u} = ${coeff}\\hat{i}$ and $\\vec{v} = ${upperLimit}\\hat{i}$?`,
-          ops: [`$${coeff * upperLimit}$`, `$${coeff + upperLimit}$`, `$0$`, `$1$`]
+          text: `What is the dot product of vectors $\\vec{u} = ${coeff}\\hat{i}$ and $\\vec{v} = ${upperLimit}\\hat{i}$?`,
+          ans: `$${coeff * upperLimit}$`,
+          d1: `$${coeff + upperLimit}$`,
+          d2: `$0$`,
+          d3: `$1$`,
+          explanation: `The dot product is $\\vec{u} \\cdot \\vec{v} = (${coeff})(${upperLimit}) (\\hat{i} \\cdot \\hat{i}) = ${coeff * upperLimit} \\times 1 = ${coeff * upperLimit}$.`
         }
       ];
 
       const tmpl = mathTemplates[num % mathTemplates.length];
+      const correctAns = tmpl.ans;
+      const options = [correctAns, tmpl.d1, tmpl.d2, tmpl.d3];
+      const correctIdx = (num + testNumber) % 4;
+      options[0] = options[correctIdx];
+      options[correctIdx] = correctAns;
       
       list.push({
         id: qId,
         type: 'latex',
         questionText: tmpl.text,
-        options: tmpl.ops,
-        correctOptionIndex: num % 4,
-        explanation: `Explanation for math question ${num} of ${title}.`
+        options,
+        correctOptionIndex: correctIdx,
+        explanation: tmpl.explanation
       });
     }
   }

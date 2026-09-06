@@ -68,7 +68,8 @@ function InstructionsContent() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => router.back()} 
-              className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 bg-background-custom/40 rounded-lg border border-[#334155]/60 cursor-pointer"
+              aria-label="Go back to previous page"
+              className="text-text-secondary-custom hover:text-text-primary-custom p-1.5 bg-background-custom/40 rounded-lg border border-[#334155]/60 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary-custom outline-none"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -150,7 +151,7 @@ function InstructionsContent() {
           <div className="pt-2">
             <button
               onClick={handleStartTest}
-              className="w-full py-3.5 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-xl font-bold text-sm tracking-wide shadow-md shadow-primary-custom/10 transition-colors cursor-pointer outline-none"
+              className="w-full py-3.5 bg-primary-custom hover:bg-primary-custom/90 text-white rounded-xl font-bold text-sm tracking-wide shadow-md shadow-primary-custom/10 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-custom"
             >
               START TEST
             </button>

@@ -8,6 +8,7 @@ interface QuestionCardProps {
   timeSpent: number; // in seconds
   positiveMarks: number;
   negativeMarks: number;
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl';
 }
 
 export default function QuestionCard({ 
@@ -15,7 +16,8 @@ export default function QuestionCard({
   questionNumber, 
   timeSpent, 
   positiveMarks, 
-  negativeMarks 
+  negativeMarks,
+  fontSize = 'base'
 }: QuestionCardProps) {
   
   const formatTimeSpent = (secs: number) => {
@@ -51,7 +53,9 @@ export default function QuestionCard({
       </div>
 
       {/* Question Text Area */}
-      <div className="space-y-4 text-text-primary-custom text-base leading-relaxed">
+      <div className={`space-y-4 text-text-primary-custom leading-relaxed ${
+        fontSize === 'sm' ? 'text-sm' : fontSize === 'lg' ? 'text-lg' : fontSize === 'xl' ? 'text-xl' : 'text-base'
+      }`}>
         {question.comprehension && (
           <div className="bg-warning-custom/10 border-l-4 border-warning-custom rounded-r-xl p-4 text-text-secondary-custom text-sm leading-relaxed mb-4">
             <LatexRenderer text={question.comprehension} />
